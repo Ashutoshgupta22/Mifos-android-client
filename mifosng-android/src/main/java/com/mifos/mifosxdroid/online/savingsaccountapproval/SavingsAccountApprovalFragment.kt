@@ -8,13 +8,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
+import butterknife.BindView
+import butterknife.ButterKnife
+import butterknife.OnClick
 import com.mifos.api.GenericResponse
 import com.mifos.mifosxdroid.R
 import com.mifos.mifosxdroid.core.MifosBaseActivity
 import com.mifos.mifosxdroid.core.MifosBaseFragment
-import com.mifos.mifosxdroid.databinding.DialogFragmentApproveSavingsBinding
 import com.mifos.mifosxdroid.uihelpers.MFDatePicker
 import com.mifos.mifosxdroid.uihelpers.MFDatePicker.OnDatePickListener
 import com.mifos.objects.accounts.loan.SavingsApproval
@@ -27,11 +32,23 @@ import javax.inject.Inject
  */
 class SavingsAccountApprovalFragment : MifosBaseFragment(), OnDatePickListener, SavingsAccountApprovalMvpView {
     val LOG_TAG = javaClass.simpleName
-    private lateinit var binding: DialogFragmentApproveSavingsBinding
+
+    @JvmField
+    @BindView(R.id.tv_approval_date)
+    var tvApprovalDate: TextView? = null
+
+    @JvmField
+    @BindView(R.id.btn_approve_savings)
+    var btnApproveSavings: Button? = null
+
+    @JvmField
+    @BindView(R.id.et_savings_approval_reason)
+    var etSavingsApprovalReason: EditText? = null
 
     @JvmField
     @Inject
     var mSavingsAccountApprovalPresenter: SavingsAccountApprovalPresenter? = null
+    lateinit var rootView: View
     var approvaldate: String? = null
     var savingsAccountNumber = 0
     var savingsAccountType: DepositType? = null
@@ -50,33 +67,27 @@ class SavingsAccountApprovalFragment : MifosBaseFragment(), OnDatePickListener, 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         activity?.actionBar?.setDisplayHomeAsUpEnabled(true)
-
-        binding = DialogFragmentApproveSavingsBinding.inflate(inflater,container,false)
+        rootView = inflater.inflate(R.layout.dialog_fragment_approve_savings, null)
+        ButterKnife.bind(this, rootView)
         mSavingsAccountApprovalPresenter!!.attachView(this)
         safeUIBlockingUtility = SafeUIBlockingUtility(activity,
                 getString(R.string.savings_account_approval_fragment_loading_message))
         showUserInterface()
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        binding.btnApproveSavings.setOnClickListener { onClickApproveSavings() }
-        binding.tvApprovalDate.setOnClickListener { onClickApprovalDate() }
+        return rootView
     }
 
     override fun showUserInterface() {
         mfDatePicker = MFDatePicker.newInsance(this)
-        binding.tvApprovalDate.text = MFDatePicker.getDatePickedAsString()
-        approvaldate = binding.tvApprovalDate.text.toString()
+        tvApprovalDate!!.text = MFDatePicker.getDatePickedAsString()
+        approvaldate = tvApprovalDate!!.text.toString()
         showApprovalDate()
     }
 
+    @OnClick(R.id.btn_approve_savings)
     fun onClickApproveSavings() {
         if (Network.isOnline(context)) {
             val savingsApproval = SavingsApproval()
-            savingsApproval.note = binding.etSavingsApprovalReason.editableText.toString()
+            savingsApproval.note = etSavingsApprovalReason!!.editableText.toString()
             savingsApproval.approvedOnDate = approvaldate
             initiateSavingsApproval(savingsApproval)
         } else {
@@ -86,12 +97,13 @@ class SavingsAccountApprovalFragment : MifosBaseFragment(), OnDatePickListener, 
         }
     }
 
+    @OnClick(R.id.tv_approval_date)
     fun onClickApprovalDate() {
         mfDatePicker!!.show(requireActivity().supportFragmentManager, FragmentConstants.DFRAG_DATE_PICKER)
     }
 
     override fun onDatePicked(date: String) {
-        binding.tvApprovalDate.text = date
+        tvApprovalDate!!.text = date
         approvaldate = date
         showApprovalDate()
     }

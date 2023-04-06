@@ -15,11 +15,14 @@ import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.mifos.mifosxdroid.databinding.RowCollectionSheetLoanBinding;
+import com.mifos.mifosxdroid.R;
 import com.mifos.objects.db.Loan;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by ishankhanna on 21/07/14.
@@ -62,18 +65,14 @@ public class CollectionSheetLoanAccountListAdapter extends BaseAdapter {
     public View getView(final int position, View convertView, ViewGroup parent) {
 
         final ReusableViewHolder reusableViewHolder;
-        RowCollectionSheetLoanBinding binding;
         if (convertView == null) {
 
-            binding = RowCollectionSheetLoanBinding.inflate(layoutInflater, parent, false);
-            reusableViewHolder = new ReusableViewHolder(binding);
-            reusableViewHolder.view = binding.getRoot();
-            reusableViewHolder.view.setTag(reusableViewHolder);
-
+            convertView = layoutInflater.inflate(R.layout.row_collection_sheet_loan, null);
+            reusableViewHolder = new ReusableViewHolder(convertView);
+            convertView.setTag(reusableViewHolder);
 
         } else {
             reusableViewHolder = (ReusableViewHolder) convertView.getTag();
-            reusableViewHolder.view = convertView;
         }
 
 
@@ -113,19 +112,20 @@ public class CollectionSheetLoanAccountListAdapter extends BaseAdapter {
             }
         });
 
-        return reusableViewHolder.view;
+        return convertView;
     }
 
     public static class ReusableViewHolder {
-        TextView tv_loanShortName;
-        TextView tv_amountDue;
-        EditText et_amountPaid;
-        private View view;
 
-        public ReusableViewHolder(RowCollectionSheetLoanBinding binding) {
-            tv_loanShortName = binding.tvLoanShortname;
-            tv_amountDue = binding.tvAmountDue;
-            et_amountPaid = binding.etAmountPaid;
+        @BindView(R.id.tv_loan_shortname)
+        TextView tv_loanShortName;
+        @BindView(R.id.tv_amountDue)
+        TextView tv_amountDue;
+        @BindView(R.id.et_amountPaid)
+        EditText et_amountPaid;
+
+        public ReusableViewHolder(View view) {
+            ButterKnife.bind(this, view);
         }
     }
 

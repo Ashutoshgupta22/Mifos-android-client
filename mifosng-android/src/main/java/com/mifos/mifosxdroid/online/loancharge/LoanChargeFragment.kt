@@ -6,14 +6,21 @@ package com.mifos.mifosxdroid.online.loancharge
 
 import android.os.Bundle
 import android.view.*
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import butterknife.BindView
+import butterknife.ButterKnife
+import butterknife.OnClick
 import com.mifos.mifosxdroid.R
 import com.mifos.mifosxdroid.adapters.ChargeNameListAdapter
 import com.mifos.mifosxdroid.core.EndlessRecyclerOnScrollListener
 import com.mifos.mifosxdroid.core.MifosBaseActivity
 import com.mifos.mifosxdroid.core.MifosBaseFragment
 import com.mifos.mifosxdroid.core.util.Toaster
-import com.mifos.mifosxdroid.databinding.FragmentChargeListBinding
 import com.mifos.mifosxdroid.dialogfragments.chargedialog.OnChargeCreateListener
 import com.mifos.mifosxdroid.dialogfragments.loanchargedialog.LoanChargeDialogFragment
 import com.mifos.objects.client.Charges
@@ -25,14 +32,32 @@ import javax.inject.Inject
  * Created by nellyk on 1/22/2016.
  */
 class LoanChargeFragment : MifosBaseFragment(), LoanChargeMvpView, OnChargeCreateListener {
+    @kotlin.jvm.JvmField
+    @BindView(R.id.rv_charge)
+    var rv_charges: RecyclerView? = null
 
-    private lateinit var binding: FragmentChargeListBinding
+    @kotlin.jvm.JvmField
+    @BindView(R.id.swipe_container)
+    var swipeRefreshLayout: SwipeRefreshLayout? = null
 
-    @JvmField
+    @kotlin.jvm.JvmField
+    @BindView(R.id.noChargesText)
+    var mNoChargesText: TextView? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.noChargesIcon)
+    var mNoChargesIcon: ImageView? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.ll_error)
+    var ll_error: LinearLayout? = null
+
+    @kotlin.jvm.JvmField
     @Inject
     var mLoanChargePresenter: LoanChargePresenter? = null
     private var chargesList: MutableList<Charges> = ArrayList()
     private var mChargesNameListAdapter: ChargeNameListAdapter? = null
+    private lateinit var rootView: View
     private var loanAccountNumber = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,13 +66,14 @@ class LoanChargeFragment : MifosBaseFragment(), LoanChargeMvpView, OnChargeCreat
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        binding = FragmentChargeListBinding.inflate(inflater,container,false)
+        rootView = inflater.inflate(R.layout.fragment_charge_list, container, false)
         setHasOptionsMenu(true)
+        ButterKnife.bind(this, rootView)
         mLoanChargePresenter!!.attachView(this)
         val layoutManager = LinearLayoutManager(activity)
         layoutManager.orientation = LinearLayoutManager.VERTICAL
-        binding.rvCharge.layoutManager = layoutManager
-        binding.rvCharge.setHasFixedSize(true)
+        rv_charges!!.layoutManager = layoutManager
+        rv_charges!!.setHasFixedSize(true)
 
 
         //Loading LoanChargesList
@@ -56,10 +82,10 @@ class LoanChargeFragment : MifosBaseFragment(), LoanChargeMvpView, OnChargeCreat
         /**
          * Setting mApiRestCounter to 1 and send Refresh Request to Server
          */
-        binding.swipeContainer.setColorSchemeResources(R.color.blue_light, R.color.green_light, R.color.orange_light, R.color.red_light)
-        binding.swipeContainer.setOnRefreshListener {
+        swipeRefreshLayout!!.setColorSchemeResources(R.color.blue_light, R.color.green_light, R.color.orange_light, R.color.red_light)
+        swipeRefreshLayout!!.setOnRefreshListener {
             mLoanChargePresenter!!.loadLoanChargesList(loanAccountNumber)
-            if (binding.swipeContainer.isRefreshing) binding.swipeContainer.isRefreshing = false
+            if (swipeRefreshLayout!!.isRefreshing) swipeRefreshLayout!!.isRefreshing = false
         }
         /**
          * This is the LoadMore of the RecyclerView. It called When Last Element of RecyclerView
@@ -67,27 +93,22 @@ class LoanChargeFragment : MifosBaseFragment(), LoanChargeMvpView, OnChargeCreat
          * Increase the mApiRestCounter by 1 and Send Api Request to Server with Paged(True)
          * and offset(mCenterList.size()) and limit(100).
          */
-        binding.rvCharge.addOnScrollListener(object : EndlessRecyclerOnScrollListener(layoutManager) {
+        rv_charges!!.addOnScrollListener(object : EndlessRecyclerOnScrollListener(layoutManager) {
             override fun onLoadMore(current_page: Int) {
 
                 //Future Implementation
             }
         })
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        binding.noChargesIcon.setOnClickListener { reloadOnError() }
+        return rootView
     }
 
     /**
      * Shows When mApiRestValue is 1 and Server Response is Null.
      * Onclick Send Fresh Request for Center list.
      */
+    @OnClick(R.id.noChargesIcon)
     fun reloadOnError() {
-        binding.llError.visibility = View.GONE
+        ll_error!!.visibility = View.GONE
         mLoanChargePresenter!!.loadLoanChargesList(loanAccountNumber)
     }
 
@@ -98,19 +119,19 @@ class LoanChargeFragment : MifosBaseFragment(), LoanChargeMvpView, OnChargeCreat
     override fun showLoanChargesList(charges: MutableList<Charges>) {
         chargesList = charges
         mChargesNameListAdapter = ChargeNameListAdapter(chargesList, loanAccountNumber)
-        binding.rvCharge.adapter = mChargesNameListAdapter
+        rv_charges!!.adapter = mChargesNameListAdapter
         if (charges.size == 0) {
-            binding.llError.visibility = View.VISIBLE
-            binding.noChargesText.text = getString(R.string.message_no_charges_available)
-            binding.noChargesIcon.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp)
+            ll_error!!.visibility = View.VISIBLE
+            mNoChargesText!!.text = getString(R.string.message_no_charges_available)
+            mNoChargesIcon!!.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp)
         }
     }
 
     override fun showFetchingError(s: String) {
-        binding.llError.visibility = View.VISIBLE
-        binding.noChargesText.text = "$s\n Click to Refresh "
+        ll_error!!.visibility = View.VISIBLE
+        mNoChargesText!!.text = "$s\n Click to Refresh "
         mLoanChargePresenter!!.loadLoanChargesList(loanAccountNumber)
-        Toaster.show(binding.root, s)
+        Toaster.show(rootView, s)
     }
 
     override fun showProgressbar(b: Boolean) {
@@ -151,12 +172,12 @@ class LoanChargeFragment : MifosBaseFragment(), LoanChargeMvpView, OnChargeCreat
 
     override fun onChargeCreatedSuccess(charge: Charges) {
         chargesList.add(charge)
-        Toaster.show(binding.root, getString(R.string.message_charge_created_success))
+        Toaster.show(rootView, getString(R.string.message_charge_created_success))
         mChargesNameListAdapter!!.notifyItemInserted(chargesList.size - 1)
     }
 
     override fun onChargeCreatedFailure(errorMessage: String) {
-        Toaster.show(binding.root, errorMessage)
+        Toaster.show(rootView, errorMessage)
     }
 
     companion object {

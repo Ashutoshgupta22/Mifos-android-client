@@ -14,8 +14,7 @@ import android.widget.TextView;
 
 import com.joanzapata.iconify.Iconify;
 import com.joanzapata.iconify.fonts.MaterialIcons;
-import com.mifos.mifosxdroid.databinding.RowLoanTransactionItemBinding;
-import com.mifos.mifosxdroid.databinding.RowLoanTransactionItemDetailBinding;
+import com.mifos.mifosxdroid.R;
 import com.mifos.objects.accounts.loan.Transaction;
 import com.mifos.objects.accounts.loan.Type;
 import com.mifos.utils.DateHelper;
@@ -23,6 +22,8 @@ import com.mifos.utils.DateHelper;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by ishankhanna on 21/06/14.
@@ -98,15 +99,12 @@ public class LoanTransactionAdapter extends BaseExpandableListAdapter {
     public View getGroupView(int i, boolean isExpanded, View view, ViewGroup viewGroup) {
 
         ReusableParentViewHolder reusableParentViewHolder;
-        RowLoanTransactionItemBinding binding;
         if (view == null) {
-            binding = RowLoanTransactionItemBinding.inflate(layoutInflater, viewGroup, false);
-            reusableParentViewHolder = new ReusableParentViewHolder(binding);
-            reusableParentViewHolder.view = binding.getRoot();
-            reusableParentViewHolder.view.setTag(reusableParentViewHolder);
+            view = layoutInflater.inflate(R.layout.row_loan_transaction_item, null);
+            reusableParentViewHolder = new ReusableParentViewHolder(view);
+            view.setTag(reusableParentViewHolder);
         } else {
             reusableParentViewHolder = (ReusableParentViewHolder) view.getTag();
-            reusableParentViewHolder.view = view;
         }
         MaterialIcons contractedIconValue = MaterialIcons.md_add_circle_outline;
         MaterialIcons expandedIconValue = MaterialIcons.md_remove_circle_outline;
@@ -130,22 +128,19 @@ public class LoanTransactionAdapter extends BaseExpandableListAdapter {
         reusableParentViewHolder.tv_transactionAmount.setText(
                 String.valueOf(parents.get(i).getAmount()));
 
-        return reusableParentViewHolder.view;
+        return view;
     }
 
     @Override
     public View getChildView(int i, int i2, boolean b, View view, ViewGroup viewGroup) {
 
         ReusableChildViewHolder reusableChildViewHolder;
-        RowLoanTransactionItemDetailBinding binding;
         if (view == null) {
-            binding = RowLoanTransactionItemDetailBinding.inflate(layoutInflater, viewGroup, false);
-            reusableChildViewHolder = new ReusableChildViewHolder(binding);
-            reusableChildViewHolder.view = binding.getRoot();
-            reusableChildViewHolder.view.setTag(reusableChildViewHolder);
+            view = layoutInflater.inflate(R.layout.row_loan_transaction_item_detail, null);
+            reusableChildViewHolder = new ReusableChildViewHolder(view);
+            view.setTag(reusableChildViewHolder);
         } else {
             reusableChildViewHolder = (ReusableChildViewHolder) view.getTag();
-            reusableChildViewHolder.view = view;
         }
 
         reusableChildViewHolder.tv_transactionId.setText(children.get(i).getId().toString());
@@ -159,7 +154,7 @@ public class LoanTransactionAdapter extends BaseExpandableListAdapter {
         reusableChildViewHolder.tv_penalties.setText(
                 String.valueOf(children.get(i).getPenaltyChargesPortion()));
 
-        return reusableChildViewHolder.view;
+        return view;
     }
 
     @Override
@@ -169,39 +164,38 @@ public class LoanTransactionAdapter extends BaseExpandableListAdapter {
 
     public static class ReusableParentViewHolder {
 
-        private View view;
+        @BindView(R.id.tv_arrow)
         TextView tv_arrow;
+        @BindView(R.id.tv_transaction_date)
         TextView tv_transactionDate;
+        @BindView(R.id.tv_transaction_type)
         TextView tv_transactionType;
+        @BindView(R.id.tv_transaction_amount)
         TextView tv_transactionAmount;
 
-        public ReusableParentViewHolder(RowLoanTransactionItemBinding binding) {
-            tv_arrow = binding.tvArrow;
-            tv_transactionDate = binding.tvTransactionDate;
-            tv_transactionType = binding.tvTransactionType;
-            tv_transactionAmount = binding.tvTransactionAmount;
+        public ReusableParentViewHolder(View view) {
+            ButterKnife.bind(this, view);
         }
 
     }
 
     public static class ReusableChildViewHolder {
 
-        private View view;
+        @BindView(R.id.tv_transaction_id)
         TextView tv_transactionId;
+        @BindView(R.id.tv_office_name)
         TextView tv_officeName;
+        @BindView(R.id.tv_principal)
         TextView tv_principal;
+        @BindView(R.id.tv_interest)
         TextView tv_interest;
+        @BindView(R.id.tv_fees)
         TextView tv_fees;
+        @BindView(R.id.tv_penalties)
         TextView tv_penalties;
 
-        public ReusableChildViewHolder(RowLoanTransactionItemDetailBinding binding) {
-
-            tv_transactionId = binding.tvTransactionId;
-            tv_officeName = binding.tvOfficeName;
-            tv_principal = binding.tvPrincipal;
-            tv_interest = binding.tvInterest;
-            tv_fees = binding.tvFees;
-            tv_penalties = binding.tvPenalties;
+        public ReusableChildViewHolder(View view) {
+            ButterKnife.bind(this, view);
         }
 
     }

@@ -12,12 +12,15 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
+import android.widget.ListView
+import android.widget.TextView
+import butterknife.BindView
+import butterknife.ButterKnife
 import com.mifos.mifosxdroid.R
 import com.mifos.mifosxdroid.adapters.SurveyListAdapter
 import com.mifos.mifosxdroid.core.MifosBaseActivity
 import com.mifos.mifosxdroid.core.ProgressableFragment
 import com.mifos.mifosxdroid.core.util.Toaster
-import com.mifos.mifosxdroid.databinding.FragmentSurveyListBinding
 import com.mifos.objects.survey.Survey
 import com.mifos.utils.Constants
 import javax.inject.Inject
@@ -30,15 +33,20 @@ import javax.inject.Inject
  * Created by Nasim Banu on 27,January,2016.
  */
 class SurveyListFragment : ProgressableFragment(), SurveyListMvpView {
+    @JvmField
+    @BindView(R.id.lv_surveys_list)
+    var lv_surveys_list: ListView? = null
 
-    private lateinit var binding: FragmentSurveyListBinding
+    @JvmField
+    @BindView(R.id.tv_survey_name)
+    var surveySelectText: TextView? = null
 
     @JvmField
     @Inject
     var mSurveyListPresenter: SurveyListPresenter? = null
     private var mListener: OnFragmentInteractionListener? = null
+    private lateinit var rootView: View
     private var clientId = 0
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         (activity as MifosBaseActivity?)!!.activityComponent.inject(this)
@@ -48,26 +56,26 @@ class SurveyListFragment : ProgressableFragment(), SurveyListMvpView {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        binding = FragmentSurveyListBinding.inflate(inflater,container,false)
-
+        rootView = inflater.inflate(R.layout.fragment_survey_list, container, false)
+        ButterKnife.bind(this, rootView)
         mSurveyListPresenter!!.attachView(this)
         setToolbarTitle(getString(R.string.surveys))
         mSurveyListPresenter!!.loadSurveyList()
-        return binding.root
+        return rootView
     }
 
     override fun showAllSurvey(surveys: List<Survey?>?) {
-        if (surveys!!.isEmpty()) {
-            binding.tvSurveyName.text = resources.getString(R.string.no_survey_available_for_client)
+        if (surveys!!.size == 0) {
+            surveySelectText!!.text = resources.getString(R.string.no_survey_available_for_client)
         } else {
             val surveyListAdapter = SurveyListAdapter(activity, surveys)
-            binding.lvSurveysList.adapter = surveyListAdapter
-            binding.lvSurveysList.onItemClickListener = AdapterView.OnItemClickListener { adapterView, view, position, l -> mListener!!.loadSurveyQuestion(surveys?.get(position), clientId) }
+            lv_surveys_list!!.adapter = surveyListAdapter
+            lv_surveys_list!!.onItemClickListener = AdapterView.OnItemClickListener { adapterView, view, position, l -> mListener!!.loadSurveyQuestion(surveys?.get(position), clientId) }
         }
     }
 
     override fun showFetchingError(errorMessage: Int) {
-        Toaster.show(binding.root, resources.getString(errorMessage))
+        Toaster.show(rootView, resources.getString(errorMessage))
     }
 
     override fun showProgressbar(b: Boolean) {

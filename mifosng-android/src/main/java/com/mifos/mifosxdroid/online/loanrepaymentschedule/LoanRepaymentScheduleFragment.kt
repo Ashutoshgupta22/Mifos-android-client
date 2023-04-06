@@ -9,12 +9,15 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ListView
+import android.widget.TextView
+import butterknife.BindView
+import butterknife.ButterKnife
 import com.mifos.mifosxdroid.R
 import com.mifos.mifosxdroid.adapters.LoanRepaymentScheduleAdapter
 import com.mifos.mifosxdroid.core.MifosBaseActivity
 import com.mifos.mifosxdroid.core.ProgressableFragment
 import com.mifos.mifosxdroid.core.util.Toaster
-import com.mifos.mifosxdroid.databinding.FragmentLoanRepaymentScheduleBinding
 import com.mifos.objects.accounts.loan.LoanWithAssociations
 import com.mifos.objects.accounts.loan.RepaymentSchedule
 import com.mifos.utils.Constants
@@ -22,13 +25,28 @@ import javax.inject.Inject
 
 class LoanRepaymentScheduleFragment : ProgressableFragment(), LoanRepaymentScheduleMvpView {
     private val LOG_TAG = javaClass.simpleName
-    private lateinit var binding: FragmentLoanRepaymentScheduleBinding
 
-    @JvmField
+    @kotlin.jvm.JvmField
+    @BindView(R.id.lv_repayment_schedule)
+    var lv_repaymentSchedule: ListView? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.tv_total_paid)
+    var tv_totalPaid: TextView? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.tv_total_upcoming)
+    var tv_totalUpcoming: TextView? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.tv_total_overdue)
+    var tv_totalOverdue: TextView? = null
+
+    @kotlin.jvm.JvmField
     @Inject
     var mLoanRepaymentSchedulePresenter: LoanRepaymentSchedulePresenter? = null
     private var loanAccountNumber = 0
-
+    private lateinit var rootView: View
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         (activity as MifosBaseActivity?)!!.activityComponent.inject(this)
@@ -37,11 +55,12 @@ class LoanRepaymentScheduleFragment : ProgressableFragment(), LoanRepaymentSched
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        binding = FragmentLoanRepaymentScheduleBinding.inflate(inflater,container,false)
+        rootView = inflater.inflate(R.layout.fragment_loan_repayment_schedule, container, false)
         setToolbarTitle(resources.getString(R.string.loan_repayment_schedule))
+        ButterKnife.bind(this, rootView)
         mLoanRepaymentSchedulePresenter!!.attachView(this)
         inflateRepaymentSchedule()
-        return binding.root
+        return rootView
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
@@ -69,22 +88,22 @@ class LoanRepaymentScheduleFragment : ProgressableFragment(), LoanRepaymentSched
                 .repaymentSchedule
                 .getlistOfActualPeriods()
         val loanRepaymentScheduleAdapter = LoanRepaymentScheduleAdapter(activity, listOfActualPeriods)
-        binding.lvRepaymentSchedule.adapter = loanRepaymentScheduleAdapter
+        lv_repaymentSchedule!!.adapter = loanRepaymentScheduleAdapter
         val totalRepaymentsCompleted = resources.getString(R.string.complete) + "" +
                 " : "
         val totalRepaymentsOverdue = resources.getString(R.string.overdue) + " : "
         val totalRepaymentsPending = resources.getString(R.string.pending) + " : "
         //Implementing the Footer here
-        binding.flrsFooter.tvTotalPaid.text = totalRepaymentsCompleted + RepaymentSchedule
+        tv_totalPaid!!.text = totalRepaymentsCompleted + RepaymentSchedule
                 .getNumberOfRepaymentsComplete(listOfActualPeriods)
-        binding.flrsFooter.tvTotalOverdue.text = totalRepaymentsOverdue + RepaymentSchedule
+        tv_totalOverdue!!.text = totalRepaymentsOverdue + RepaymentSchedule
                 .getNumberOfRepaymentsOverDue(listOfActualPeriods)
-        binding.flrsFooter.tvTotalUpcoming.text = totalRepaymentsPending + RepaymentSchedule
+        tv_totalUpcoming!!.text = totalRepaymentsPending + RepaymentSchedule
                 .getNumberOfRepaymentsPending(listOfActualPeriods)
     }
 
     override fun showFetchingError(s: String?) {
-        Toaster.show(binding.root, s)
+        Toaster.show(rootView, s)
     }
 
     companion object {

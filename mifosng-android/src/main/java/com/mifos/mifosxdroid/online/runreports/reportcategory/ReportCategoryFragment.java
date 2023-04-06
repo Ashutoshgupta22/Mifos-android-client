@@ -9,17 +9,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.annotation.Nullable;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-
 import com.mifos.mifosxdroid.R;
 import com.mifos.mifosxdroid.adapters.ClientReportAdapter;
 import com.mifos.mifosxdroid.core.MifosBaseActivity;
 import com.mifos.mifosxdroid.core.MifosBaseFragment;
 import com.mifos.mifosxdroid.core.util.Toaster;
-import com.mifos.mifosxdroid.databinding.FragmentRunreportBinding;
 import com.mifos.mifosxdroid.online.runreports.reportdetail.ReportDetailFragment;
 import com.mifos.objects.runreports.client.ClientReportTypeItem;
 import com.mifos.utils.Constants;
@@ -28,6 +22,13 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by Tarun on 02-08-17.
@@ -35,13 +36,15 @@ import javax.inject.Inject;
 
 public class ReportCategoryFragment extends MifosBaseFragment implements ReportCategoryMvpView {
 
-    private FragmentRunreportBinding binding;
+    @BindView(R.id.recycler_report)
+    RecyclerView rvReports;
 
     @Inject
     ReportCategoryPresenter presenter;
 
     ClientReportAdapter reportAdapter;
 
+    private View rootView;
     private List<ClientReportTypeItem> reportTypeItems;
     private String reportCategory;
     BroadcastReceiver broadCastNewMessage = new BroadcastReceiver() {
@@ -85,17 +88,18 @@ public class ReportCategoryFragment extends MifosBaseFragment implements ReportC
     @Override
     public View onCreateView(LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        binding = FragmentRunreportBinding.inflate(inflater, container, false);
+        rootView = inflater.inflate(R.layout.fragment_runreport, container, false);
         setHasOptionsMenu(true);
+        ButterKnife.bind(this, rootView);
         presenter.attachView(this);
         presenter.fetchCategories(reportCategory, false, true);
 
-        return binding.getRoot();
+        return rootView;
     }
 
     @Override
     public void showError(String error) {
-        Toaster.show(binding.getRoot(), error);
+        Toaster.show(rootView, error);
     }
 
     @Override
@@ -104,15 +108,15 @@ public class ReportCategoryFragment extends MifosBaseFragment implements ReportC
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(
-                binding.recyclerReport.getContext(), layoutManager.getOrientation());
-        binding.recyclerReport.setLayoutManager(layoutManager);
-        binding.recyclerReport.addItemDecoration(dividerItemDecoration);
+                rvReports.getContext(), layoutManager.getOrientation());
+        rvReports.setLayoutManager(layoutManager);
+        rvReports.addItemDecoration(dividerItemDecoration);
         reportAdapter = new ClientReportAdapter(position -> {
                 openDetailFragment(position);
                 return null;
             }
         );
-        binding.recyclerReport.setAdapter(reportAdapter);
+        rvReports.setAdapter(reportAdapter);
 
         reportAdapter.setReportItems(reportTypes);
         reportAdapter.notifyDataSetChanged();

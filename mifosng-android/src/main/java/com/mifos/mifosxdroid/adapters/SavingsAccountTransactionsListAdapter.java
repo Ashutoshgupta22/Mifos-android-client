@@ -7,21 +7,21 @@ package com.mifos.mifosxdroid.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
+import androidx.core.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import androidx.core.content.ContextCompat;
-
 import com.mifos.mifosxdroid.R;
-import com.mifos.mifosxdroid.databinding.RowSavingsTransactionItemBinding;
 import com.mifos.objects.accounts.savings.Transaction;
 import com.mifos.utils.DateHelper;
 
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by ishankhanna on 30/05/14.
@@ -60,17 +60,14 @@ public class SavingsAccountTransactionsListAdapter extends BaseAdapter {
     public View getView(int i, View view, ViewGroup viewGroup) {
 
         ReusableViewHolder reusableViewHolder;
-        RowSavingsTransactionItemBinding binding;
         if (view == null) {
 
-            binding = RowSavingsTransactionItemBinding.inflate(layoutInflater, viewGroup, false);
-            reusableViewHolder = new ReusableViewHolder(binding);
-            reusableViewHolder.view = binding.getRoot();
-            reusableViewHolder.view.setTag(reusableViewHolder);
+            view = layoutInflater.inflate(R.layout.row_savings_transaction_item, null);
+            reusableViewHolder = new ReusableViewHolder(view);
+            view.setTag(reusableViewHolder);
 
         } else {
             reusableViewHolder = (ReusableViewHolder) view.getTag();
-            reusableViewHolder.view = view;
         }
 
         reusableViewHolder.tv_transactionDate.setText(DateHelper.getDateAsString
@@ -91,22 +88,22 @@ public class SavingsAccountTransactionsListAdapter extends BaseAdapter {
         } else {
             reusableViewHolder.tv_transactionAmount.setTextColor(Color.BLACK);
         }
-        return reusableViewHolder.view;
+        return view;
     }
 
     public static class ReusableViewHolder {
 
-        private View view;
+        @BindView(R.id.tv_transaction_date)
         TextView tv_transactionDate;
 
+        @BindView(R.id.tv_transaction_type)
         TextView tv_transactionType;
 
+        @BindView(R.id.tv_transaction_amount)
         TextView tv_transactionAmount;
 
-        public ReusableViewHolder(RowSavingsTransactionItemBinding binding) {
-            tv_transactionDate = binding.tvTransactionDate;
-            tv_transactionType = binding.tvTransactionType;
-            tv_transactionAmount = binding.tvTransactionAmount;
+        public ReusableViewHolder(View view) {
+            ButterKnife.bind(this, view);
         }
     }
 }

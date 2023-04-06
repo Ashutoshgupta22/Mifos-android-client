@@ -1,9 +1,9 @@
 package com.mifos.mifosxdroid.online
 
 import android.os.Bundle
+import butterknife.ButterKnife
 import com.mifos.mifosxdroid.R
 import com.mifos.mifosxdroid.core.MifosBaseActivity
-import com.mifos.mifosxdroid.databinding.ActivityToolbarContainerBinding
 import com.mifos.mifosxdroid.online.clientlist.ClientListFragment
 import com.mifos.mifosxdroid.online.groupdetails.GroupDetailsFragment
 import com.mifos.mifosxdroid.online.groupdetails.GroupDetailsFragment.Companion.newInstance
@@ -22,16 +22,11 @@ import com.mifos.utils.Constants
 /**
  * Created by nellyk on 2/27/2016.
  */
-class GroupsActivity : MifosBaseActivity(), GroupDetailsFragment.OnFragmentInteractionListener,
-    LoanAccountSummaryFragment.OnFragmentInteractionListener,
-    LoanRepaymentFragment.OnFragmentInteractionListener,
-    SavingsAccountSummaryFragment.OnFragmentInteractionListener {
-    private lateinit var binding: ActivityToolbarContainerBinding
-
+class GroupsActivity : MifosBaseActivity(), GroupDetailsFragment.OnFragmentInteractionListener, LoanAccountSummaryFragment.OnFragmentInteractionListener, LoanRepaymentFragment.OnFragmentInteractionListener, SavingsAccountSummaryFragment.OnFragmentInteractionListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityToolbarContainerBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_toolbar_container)
+        ButterKnife.bind(this)
         showBackButton()
         val groupId = intent.extras!!.getInt(Constants.GROUP_ID)
         replaceFragment(newInstance(groupId), false, R.id.container)

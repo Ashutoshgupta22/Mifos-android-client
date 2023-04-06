@@ -8,15 +8,18 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
@@ -28,7 +31,6 @@ import com.mifos.mifosxdroid.adapters.PinpointClientAdapter;
 import com.mifos.mifosxdroid.core.MaterialDialog;
 import com.mifos.mifosxdroid.core.MifosBaseActivity;
 import com.mifos.mifosxdroid.core.util.Toaster;
-import com.mifos.mifosxdroid.databinding.ActivityPinpointLocationBinding;
 import com.mifos.objects.client.ClientAddressRequest;
 import com.mifos.objects.client.ClientAddressResponse;
 import com.mifos.utils.CheckSelfPermissionAndRequest;
@@ -39,16 +41,32 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 /**
  * @author fomenkoo
  */
 public class PinpointClientActivity extends MifosBaseActivity implements PinPointClientMvpView,
         SwipeRefreshLayout.OnRefreshListener, PinpointClientAdapter.OnItemClick {
 
-    private ActivityPinpointLocationBinding binding;
-
     private static final int REQUEST_ADD_PLACE_PICKER = 1;
     private static final int REQUEST_UPDATE_PLACE_PICKER = 2;
+
+    @BindView(R.id.rv_pinpoint_location)
+    RecyclerView rvPinPointLocation;
+
+    @BindView(R.id.swipe_container)
+    SwipeRefreshLayout swipeRefreshLayout;
+
+    @BindView(R.id.tv_no_location)
+    TextView tvNoLocation;
+
+    @BindView(R.id.ll_error)
+    LinearLayout llError;
+
+    @BindView(R.id.iv_no_location)
+    ImageView ivNoLocation;
 
     @Inject
     PinpointClientAdapter pinpointClientAdapter;
@@ -98,10 +116,9 @@ public class PinpointClientActivity extends MifosBaseActivity implements PinPoin
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getActivityComponent().inject(this);
+        setContentView(R.layout.activity_pinpoint_location);
 
-        binding = ActivityPinpointLocationBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-
+        ButterKnife.bind(this);
         pinPointClientPresenter.attachView(this);
 
         showBackButton();
@@ -116,13 +133,13 @@ public class PinpointClientActivity extends MifosBaseActivity implements PinPoin
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
         mLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         pinpointClientAdapter.setContext(this);
-        binding.rvPinpointLocation.setLayoutManager(mLayoutManager);
-        binding.rvPinpointLocation.setHasFixedSize(true);
+        rvPinPointLocation.setLayoutManager(mLayoutManager);
+        rvPinPointLocation.setHasFixedSize(true);
         pinpointClientAdapter.setItemClick(this);
-        binding.rvPinpointLocation.setAdapter(pinpointClientAdapter);
-        binding.swipeContainer.setColorSchemeColors(this
+        rvPinPointLocation.setAdapter(pinpointClientAdapter);
+        swipeRefreshLayout.setColorSchemeColors(this
                 .getResources().getIntArray(R.array.swipeRefreshColors));
-        binding.swipeContainer.setOnRefreshListener(this);
+        swipeRefreshLayout.setOnRefreshListener(this);
     }
 
     @Override
@@ -202,27 +219,27 @@ public class PinpointClientActivity extends MifosBaseActivity implements PinPoin
 
     @Override
     public void onRefresh() {
-        binding.llError.setVisibility(View.GONE);
+        llError.setVisibility(View.GONE);
         pinPointClientPresenter.getClientPinpointLocations(clientId);
     }
 
     @Override
     public void showClientPinpointLocations(List<ClientAddressResponse> clientAddressResponses) {
-        binding.llError.setVisibility(View.GONE);
+        llError.setVisibility(View.GONE);
         addresses = clientAddressResponses;
         pinpointClientAdapter.setAddress(clientAddressResponses);
     }
 
     @Override
     public void showFailedToFetchAddress() {
-        binding.llError.setVisibility(View.VISIBLE);
-        binding.tvNoLocation.setText(getString(R.string.failed_to_fetch_pinpoint_location));
+        llError.setVisibility(View.VISIBLE);
+        tvNoLocation.setText(getString(R.string.failed_to_fetch_pinpoint_location));
     }
 
     @Override
     public void showEmptyAddress() {
-        binding.llError.setVisibility(View.VISIBLE);
-        binding.tvNoLocation.setText(getString(R.string.empty_client_address));
+        llError.setVisibility(View.VISIBLE);
+        tvNoLocation.setText(getString(R.string.empty_client_address));
     }
 
     @Override
@@ -233,7 +250,7 @@ public class PinpointClientActivity extends MifosBaseActivity implements PinPoin
 
     @Override
     public void showProgressbar(boolean show) {
-        binding.swipeContainer.setRefreshing(show);
+        swipeRefreshLayout.setRefreshing(show);
     }
 
     @Override

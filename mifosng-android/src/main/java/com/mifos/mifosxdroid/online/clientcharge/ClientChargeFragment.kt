@@ -6,39 +6,64 @@ package com.mifos.mifosxdroid.online.clientcharge
 
 import android.os.Bundle
 import android.view.*
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import butterknife.BindView
+import butterknife.ButterKnife
+import butterknife.OnClick
 import com.mifos.mifosxdroid.R
 import com.mifos.mifosxdroid.adapters.ChargeNameListAdapter
 import com.mifos.mifosxdroid.core.EndlessRecyclerOnScrollListener
 import com.mifos.mifosxdroid.core.MifosBaseActivity
 import com.mifos.mifosxdroid.core.MifosBaseFragment
 import com.mifos.mifosxdroid.core.util.Toaster
-import com.mifos.mifosxdroid.databinding.FragmentChargeListBinding
 import com.mifos.mifosxdroid.dialogfragments.chargedialog.ChargeDialogFragment
 import com.mifos.mifosxdroid.dialogfragments.chargedialog.OnChargeCreateListener
 import com.mifos.objects.client.Charges
 import com.mifos.objects.client.Page
 import com.mifos.utils.Constants
 import com.mifos.utils.FragmentConstants
+import java.util.*
 import javax.inject.Inject
 
 /**
  * Created by nellyk on 1/22/2016.
  */
 class ClientChargeFragment : MifosBaseFragment(), ClientChargeMvpView, OnChargeCreateListener {
-    private lateinit var binding: FragmentChargeListBinding
+    @JvmField
+    @BindView(R.id.rv_charge)
+    var rv_charges: RecyclerView? = null
 
+    @JvmField
+    @BindView(R.id.swipe_container)
+    var swipeRefreshLayout: SwipeRefreshLayout? = null
+
+    @JvmField
+    @BindView(R.id.noChargesText)
+    var mNoChargesText: TextView? = null
+
+    @JvmField
+    @BindView(R.id.noChargesIcon)
+    var mNoChargesIcon: ImageView? = null
+
+    @JvmField
+    @BindView(R.id.ll_error)
+    var ll_error: LinearLayout? = null
     private lateinit var chargesList: List<Charges>
 
     @JvmField
     @Inject
     var mClientChargePresenter: ClientChargePresenter? = null
     var mChargesNameListAdapter: ChargeNameListAdapter? = null
+    private lateinit var rootView: View
     private var clientId = 0
     private var mApiRestCounter = 0
     private val limit = 10
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         (activity as MifosBaseActivity?)!!.activityComponent.inject(this)
@@ -46,33 +71,28 @@ class ClientChargeFragment : MifosBaseFragment(), ClientChargeMvpView, OnChargeC
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        binding = FragmentChargeListBinding.inflate(inflater,container,false)
+        rootView = inflater.inflate(R.layout.fragment_charge_list, container, false)
         setHasOptionsMenu(true)
+        ButterKnife.bind(this, rootView)
         mClientChargePresenter!!.attachView(this)
         val layoutManager = LinearLayoutManager(activity)
         layoutManager.orientation = LinearLayoutManager.VERTICAL
-        binding.rvCharge.layoutManager = layoutManager
-        binding.rvCharge.setHasFixedSize(true)
+        rv_charges!!.layoutManager = layoutManager
+        rv_charges!!.setHasFixedSize(true)
         setToolbarTitle(getString(R.string.charges))
         mApiRestCounter = 1
         mClientChargePresenter!!.loadCharges(clientId, 0, limit)
         /**
          * Setting mApiRestCounter to 1 and send Refresh Request to Server
          */
-        binding.swipeContainer.setColorSchemeResources(R.color.blue_light, R.color.green_light, R.color.orange_light, R.color.red_light)
-        binding.swipeContainer.setOnRefreshListener {
+        swipeRefreshLayout!!.setColorSchemeResources(R.color.blue_light, R.color.green_light, R.color.orange_light, R.color.red_light)
+        swipeRefreshLayout!!.setOnRefreshListener {
             mApiRestCounter = 1
             mClientChargePresenter!!.loadCharges(clientId, 0, limit)
-            if (binding.swipeContainer.isRefreshing) binding.swipeContainer.isRefreshing = false
+            if (swipeRefreshLayout!!.isRefreshing) swipeRefreshLayout!!.isRefreshing = false
         }
         loadMore(layoutManager)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        binding.noChargesIcon.setOnClickListener { reloadOnError() }
+        return rootView
     }
 
     /**
@@ -82,7 +102,7 @@ class ClientChargeFragment : MifosBaseFragment(), ClientChargeMvpView, OnChargeC
      * and offset(mCenterList.size()) and limit(100).
      */
     private fun loadMore(layoutManager: LinearLayoutManager) {
-        binding.rvCharge.addOnScrollListener(object : EndlessRecyclerOnScrollListener(layoutManager) {
+        rv_charges!!.addOnScrollListener(object : EndlessRecyclerOnScrollListener(layoutManager) {
             override fun onLoadMore(current_page: Int) {
                 mApiRestCounter = mApiRestCounter + 1
                 mClientChargePresenter!!.loadCharges(clientId, chargesList.size, limit)
@@ -94,8 +114,9 @@ class ClientChargeFragment : MifosBaseFragment(), ClientChargeMvpView, OnChargeC
      * Shows When mApiRestValue is 1 and Server Response is Null.
      * Onclick Send Fresh Request for Center list.
      */
+    @OnClick(R.id.noChargesIcon)
     fun reloadOnError() {
-        binding.llError.visibility = View.GONE
+        ll_error!!.visibility = View.GONE
         mClientChargePresenter!!.loadCharges(clientId, 0, limit)
     }
 
@@ -111,8 +132,8 @@ class ClientChargeFragment : MifosBaseFragment(), ClientChargeMvpView, OnChargeC
         if (mApiRestCounter == 1) {
             chargesList = chargesPage!!.pageItems as ArrayList<Charges>
             mChargesNameListAdapter = ChargeNameListAdapter(chargesList, clientId)
-            binding.rvCharge.adapter = mChargesNameListAdapter
-            binding.llError.visibility = View.GONE
+            rv_charges!!.adapter = mChargesNameListAdapter
+            ll_error!!.visibility = View.GONE
         } else {
             chargesList.addAll()
             mChargesNameListAdapter!!.notifyDataSetChanged()
@@ -120,42 +141,42 @@ class ClientChargeFragment : MifosBaseFragment(), ClientChargeMvpView, OnChargeC
             //checking the response size if size is zero then show toast No More
             // Clients Available for fetch
             if (chargesPage!!.pageItems.size == 0 &&
-                    chargesPage.totalFilteredRecords == chargesList.size) Toaster.show(binding.root, getString(R.string.message_no_more_charge))
+                    chargesPage.totalFilteredRecords == chargesList.size) Toaster.show(rootView, getString(R.string.message_no_more_charge))
         }
     }
 
     override fun onChargeCreatedSuccess(charge: Charges) {
         chargesList.add()
-        Toaster.show(binding.root, getString(R.string.message_charge_created_success))
-        if (binding.llError.visibility == View.VISIBLE) {
-            binding.llError.visibility = View.GONE
+        Toaster.show(rootView, getString(R.string.message_charge_created_success))
+        if (ll_error!!.visibility == View.VISIBLE) {
+            ll_error!!.visibility = View.GONE
         }
         //If the adapter has not been initialized, there were 0 charge items earlier. Initialize it.
         if (mChargesNameListAdapter == null) {
             mChargesNameListAdapter = ChargeNameListAdapter(chargesList, clientId)
-            binding.rvCharge.adapter = mChargesNameListAdapter
+            rv_charges!!.adapter = mChargesNameListAdapter
         }
         mChargesNameListAdapter!!.notifyItemInserted(chargesList.size - 1)
     }
 
     override fun onChargeCreatedFailure(errorMessage: String) {
-        Toaster.show(binding.root, errorMessage)
+        Toaster.show(rootView, errorMessage)
     }
 
     override fun showEmptyCharges() {
         if (mChargesNameListAdapter == null || mChargesNameListAdapter!!.itemCount == 0) {
-            binding.llError.visibility = View.VISIBLE
-            binding.noChargesText.text = resources.getString(R.string.message_no_charges_available)
-            binding.noChargesIcon.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp)
+            ll_error!!.visibility = View.VISIBLE
+            mNoChargesText!!.text = resources.getString(R.string.message_no_charges_available)
+            mNoChargesIcon!!.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp)
         }
     }
 
     override fun showFetchingErrorCharges(s: String) {
         if (mApiRestCounter == 1) {
-            binding.llError.visibility = View.VISIBLE
-            binding.noChargesText.text = "$s\n Click to Refresh "
+            ll_error!!.visibility = View.VISIBLE
+            mNoChargesText!!.text = "$s\n Click to Refresh "
         }
-        Toaster.show(binding.root, s)
+        Toaster.show(rootView, s)
     }
 
     override fun showProgressbar(b: Boolean) {
@@ -166,7 +187,7 @@ class ClientChargeFragment : MifosBaseFragment(), ClientChargeMvpView, OnChargeC
                 hideMifosProgressBar()
             }
         } else {
-            binding.swipeContainer.isRefreshing = b
+            swipeRefreshLayout!!.isRefreshing = b
         }
     }
 

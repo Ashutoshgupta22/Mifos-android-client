@@ -5,14 +5,11 @@
     android:orientation="vertical">
 
     <LinearLayout
-        android:id="@+id/ll_client_run_report"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <include
-            android:id="@+id/include_client_report_details"
-            layout="@layout/item_client_runreport" />
+        <include layout="@layout/item_client_runreport" />
 
         <TableLayout
             android:id="@+id/table_details"

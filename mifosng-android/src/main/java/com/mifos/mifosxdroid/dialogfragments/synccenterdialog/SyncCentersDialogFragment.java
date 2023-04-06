@@ -2,19 +2,19 @@ package com.mifos.mifosxdroid.dialogfragments.synccenterdialog;
 
 import android.os.Bundle;
 import android.os.Parcelable;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
 
 import com.mifos.mifosxdroid.R;
 import com.mifos.mifosxdroid.core.MifosBaseActivity;
 import com.mifos.mifosxdroid.core.util.Toaster;
-import com.mifos.mifosxdroid.databinding.DialogFragmentSyncCentersBinding;
 import com.mifos.objects.group.Center;
 import com.mifos.utils.Constants;
 import com.mifos.utils.Network;
@@ -25,13 +25,58 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class SyncCentersDialogFragment extends DialogFragment implements SyncCenterDialogMvpView {
-    private DialogFragmentSyncCentersBinding binding;
+
+    @BindView(R.id.tv_sync_title)
+    TextView tvSyncTitle;
+
+    @BindView(R.id.tv_center_name)
+    TextView tvSyncingCenterName;
+
+    @BindView(R.id.tv_total_centers)
+    TextView tvTotalCenters;
+
+    @BindView(R.id.tv_syncing_center)
+    TextView tvSyncingCenter;
+
+    @BindView(R.id.pb_sync_center)
+    ProgressBar pbSyncingCenter;
+
+    @BindView(R.id.tv_total_progress)
+    TextView tvTotalProgress;
+
+    @BindView(R.id.pb_total_sync_center)
+    ProgressBar pbTotalSyncCenter;
+
+    @BindView(R.id.tv_syncing_group)
+    TextView tvSyncingGroup;
+
+    @BindView(R.id.pb_sync_group)
+    ProgressBar pbSyncingGroup;
+
+    @BindView(R.id.tv_syncing_client)
+    TextView tvSyncingClient;
+
+    @BindView(R.id.pb_sync_client)
+    ProgressBar pbSyncingClient;
+
+    @BindView(R.id.tv_sync_failed)
+    TextView tvSyncFailed;
+
+    @BindView(R.id.btn_hide)
+    Button btnHide;
+
+    @BindView(R.id.btn_cancel)
+    Button btnCancel;
 
     @Inject
     SyncCenterDialogPresenter syncCentersDialogPresenter;
 
+    View rootView;
     private List<Center> mCenterList;
 
     public static SyncCentersDialogFragment newInstance(List<Center> center) {
@@ -54,7 +99,8 @@ public class SyncCentersDialogFragment extends DialogFragment implements SyncCen
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        binding = DialogFragmentSyncCentersBinding.inflate(inflater, container, false);
+        rootView = inflater.inflate(R.layout.dialog_fragment_sync_centers, container, false);
+        ButterKnife.bind(this, rootView);
         syncCentersDialogPresenter.attachView(this);
 
         showUI();
@@ -67,23 +113,17 @@ public class SyncCentersDialogFragment extends DialogFragment implements SyncCen
             getActivity().getSupportFragmentManager().popBackStack();
         }
 
-        return binding.getRoot();
+        return rootView;
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        binding.btnCancel.setOnClickListener(view1 -> onClickCancelButton());
-        binding.btnHide.setOnClickListener(view1 -> onClickHideButton());
-    }
-
+    @OnClick(R.id.btn_cancel)
     void onClickCancelButton() {
         dismissDialog();
     }
 
+    @OnClick(R.id.btn_hide)
     void onClickHideButton() {
-        if (binding.btnHide.getText().equals(getResources().getString(R.string.dialog_action_ok))) {
+        if (btnHide.getText().equals(getResources().getString(R.string.dialog_action_ok))) {
             dismissDialog();
         } else {
             hideDialog();
@@ -92,46 +132,46 @@ public class SyncCentersDialogFragment extends DialogFragment implements SyncCen
 
     @Override
     public void showUI() {
-        binding.pbTotalSyncCenter.setMax(mCenterList.size());
+        pbTotalSyncCenter.setMax(mCenterList.size());
         String totalCenters = mCenterList.size() + getResources().getString(R.string.space) +
                 getResources().getString(R.string.centers);
-        binding.tvTotalCenters.setText(totalCenters);
-        binding.tvSyncFailed.setText(String.valueOf(0));
+        tvTotalCenters.setText(totalCenters);
+        tvSyncFailed.setText(String.valueOf(0));
     }
 
     @Override
     public void showSyncingCenter(String centerName) {
-        binding.tvSyncingCenter.setText(centerName);
-        binding.tvCenterName.setText(centerName);
+        tvSyncingCenter.setText(centerName);
+        tvSyncingCenterName.setText(centerName);
     }
 
     @Override
     public void showSyncedFailedCenters(int failedCount) {
-        binding.tvSyncFailed.setText(String.valueOf(failedCount));
+        tvSyncFailed.setText(String.valueOf(failedCount));
     }
 
     @Override
     public void setMaxSingleSyncCenterProgressBar(int total) {
-        binding.pbSyncCenter.setMax(total);
+        pbSyncingCenter.setMax(total);
     }
 
     @Override
     public void updateSingleSyncCenterProgressBar(int count) {
-        binding.pbSyncCenter.setProgress(count);
+        pbSyncingCenter.setProgress(count);
     }
 
     @Override
     public void updateTotalSyncCenterProgressBarAndCount(int count) {
-        binding.pbTotalSyncCenter.setProgress(count);
+        pbTotalSyncCenter.setProgress(count);
         String totalSyncCount = getResources()
                 .getString(R.string.space) + count + getResources()
                 .getString(R.string.slash) + mCenterList.size();
-        binding.tvTotalProgress.setText(totalSyncCount);
+        tvTotalProgress.setText(totalSyncCount);
     }
 
     @Override
     public int getMaxSingleSyncCenterProgressBar() {
-        return binding.pbSyncCenter.getMax();
+        return pbSyncingCenter.getMax();
     }
 
     @Override
@@ -142,28 +182,28 @@ public class SyncCentersDialogFragment extends DialogFragment implements SyncCen
 
     @Override
     public void showCentersSyncSuccessfully() {
-        binding.btnCancel.setVisibility(View.INVISIBLE);
-        binding.btnHide.setText(getResources().getString(R.string.dialog_action_ok));
+        btnCancel.setVisibility(View.INVISIBLE);
+        btnHide.setText(getResources().getString(R.string.dialog_action_ok));
     }
 
     @Override
     public void setGroupSyncProgressBarMax(int count) {
-        binding.pbSyncGroup.setMax(count);
+        pbSyncingGroup.setMax(count);
     }
 
     @Override
     public void updateGroupSyncProgressBar(int i) {
-        binding.pbSyncGroup.setProgress(i);
+        pbSyncingGroup.setProgress(i);
     }
 
     @Override
     public void setClientSyncProgressBarMax(int count) {
-        binding.pbSyncClient.setMax(count);
+        pbSyncingClient.setMax(count);
     }
 
     @Override
     public void updateClientSyncProgressBar(int i) {
-        binding.pbSyncClient.setProgress(i);
+        pbSyncingClient.setProgress(i);
     }
 
 
@@ -190,7 +230,7 @@ public class SyncCentersDialogFragment extends DialogFragment implements SyncCen
 
     @Override
     public void showError(int s) {
-        Toaster.show(binding.getRoot(), s);
+        Toaster.show(rootView, s);
     }
 
     @Override

@@ -7,14 +7,20 @@ package com.mifos.mifosxdroid.online
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Button
+import android.widget.TextView
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.viewpager.widget.PagerAdapter
+import androidx.viewpager.widget.ViewPager
 import androidx.viewpager.widget.ViewPager.OnPageChangeListener
+import butterknife.BindView
+import butterknife.ButterKnife
+import butterknife.OnClick
 import com.google.gson.Gson
 import com.mifos.mifosxdroid.R
 import com.mifos.mifosxdroid.adapters.SurveyPagerAdapter
 import com.mifos.mifosxdroid.core.MifosBaseActivity
-import com.mifos.mifosxdroid.databinding.ActivitySurveyQuestionBinding
 import com.mifos.mifosxdroid.online.SurveyQuestionFragment.OnAnswerSelectedListener
 import com.mifos.mifosxdroid.online.surveysubmit.SurveySubmitFragment.Companion.newInstance
 import com.mifos.mifosxdroid.online.surveysubmit.SurveySubmitFragment.DisableSwipe
@@ -29,9 +35,21 @@ import java.util.*
  * Created by Nasim Banu on 28,January,2016.
  */
 class SurveyQuestionActivity : MifosBaseActivity(), OnAnswerSelectedListener, DisableSwipe, OnPageChangeListener {
+    @JvmField
+    @BindView(R.id.surveyPager)
+    var mViewPager: ViewPager? = null
 
-    private lateinit var binding: ActivitySurveyQuestionBinding
+    @JvmField
+    @BindView(R.id.btnNext)
+    var btnNext: Button? = null
 
+    @JvmField
+    @BindView(R.id.tv_surveyEmpty)
+    var tv_surveyEmpty: TextView? = null
+
+    @JvmField
+    @BindView(R.id.toolbar)
+    var mToolbar: Toolbar? = null
     private val fragments: MutableList<Fragment> = Vector()
     private val listScorecardValues: MutableList<ScorecardValues> = ArrayList()
     private var survey: Survey? = null
@@ -42,11 +60,10 @@ class SurveyQuestionActivity : MifosBaseActivity(), OnAnswerSelectedListener, Di
     private var mCurrentQuestionPosition = 1
     var fragmentCommunicator: Communicator? = null
     private var mPagerAdapter: PagerAdapter? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivitySurveyQuestionBinding.inflate(layoutInflater)
         setContentView(R.layout.activity_survey_question)
+        ButterKnife.bind(this)
 
         //Getting Survey Gson Object
         val mIntent = intent
@@ -54,13 +71,11 @@ class SurveyQuestionActivity : MifosBaseActivity(), OnAnswerSelectedListener, Di
         clientId = mIntent.getIntExtra(Constants.CLIENT_ID, 1)
         setSubtitleToolbar()
         mPagerAdapter = SurveyPagerAdapter(supportFragmentManager, fragments)
-        binding.surveyPager.adapter = mPagerAdapter
-        binding.surveyPager.addOnPageChangeListener(this)
+        mViewPager!!.adapter = mPagerAdapter
+        mViewPager!!.addOnPageChangeListener(this)
         loadSurvey(survey)
         val actionBar = supportActionBar
         actionBar!!.setDisplayHomeAsUpEnabled(true)
-
-        binding.btnNext.setOnClickListener { onClickButtonNext() }
     }
 
     override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {}
@@ -72,9 +87,10 @@ class SurveyQuestionActivity : MifosBaseActivity(), OnAnswerSelectedListener, Di
 
     override fun onPageScrollStateChanged(state: Int) {}
 
+    @OnClick(R.id.btnNext)
     fun onClickButtonNext() {
         updateAnswerList()
-        binding.surveyPager.setCurrentItem(binding.surveyPager.currentItem + 1, true)
+        mViewPager!!.setCurrentItem(mViewPager!!.currentItem + 1, true)
         setSubtitleToolbar()
     }
 
@@ -92,9 +108,9 @@ class SurveyQuestionActivity : MifosBaseActivity(), OnAnswerSelectedListener, Di
                 fragments.add(newInstance())
                 mPagerAdapter!!.notifyDataSetChanged()
             } else {
-                binding.surveyPager.visibility = View.GONE
-                binding.btnNext.visibility = View.GONE
-                binding.tvSurveyEmpty.visibility = View.VISIBLE
+                mViewPager!!.visibility = View.GONE
+                btnNext!!.visibility = View.GONE
+                tv_surveyEmpty!!.visibility = View.VISIBLE
             }
         }
     }
@@ -125,27 +141,27 @@ class SurveyQuestionActivity : MifosBaseActivity(), OnAnswerSelectedListener, Di
     }
 
     fun nextButtonState() {
-        if (binding.surveyPager.currentItem == mPagerAdapter!!.count - 1) {
-            binding.btnNext.visibility = View.GONE
+        if (mViewPager!!.currentItem == mPagerAdapter!!.count - 1) {
+            btnNext!!.visibility = View.GONE
         } else {
-            binding.btnNext.visibility = View.VISIBLE
+            btnNext!!.visibility = View.VISIBLE
         }
     }
 
     fun setSubtitleToolbar() {
         if (survey!!.questionDatas.size == 0) {
-            binding.include.toolbar.subtitle = resources.getString(R.string.survey_subtitle)
+            mToolbar!!.subtitle = resources.getString(R.string.survey_subtitle)
         } else if (mCurrentQuestionPosition <= survey!!.questionDatas.size) {
-            binding.include.toolbar.subtitle = mCurrentQuestionPosition.toString() +
+            mToolbar!!.subtitle = mCurrentQuestionPosition.toString() +
                     resources.getString(R.string.slash) + survey!!.questionDatas.size
         } else {
-            binding.include.toolbar.subtitle = resources.getString(R.string.submit_survey)
+            mToolbar!!.subtitle = resources.getString(R.string.submit_survey)
         }
     }
 
     override fun disableSwipe() {
-        binding.surveyPager.beginFakeDrag()
-        binding.include.toolbar.subtitle = null
+        mViewPager!!.beginFakeDrag()
+        mToolbar!!.subtitle = null
     }
 
     public override fun onSaveInstanceState(savedInstanceState: Bundle) {

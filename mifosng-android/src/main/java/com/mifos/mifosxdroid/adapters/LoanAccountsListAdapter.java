@@ -6,6 +6,7 @@
 package com.mifos.mifosxdroid.adapters;
 
 import android.content.Context;
+import androidx.core.content.ContextCompat;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,13 +14,13 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import androidx.core.content.ContextCompat;
-
 import com.mifos.mifosxdroid.R;
-import com.mifos.mifosxdroid.databinding.RowAccountItemBinding;
 import com.mifos.objects.accounts.loan.LoanAccount;
 
 import java.util.List;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by ishankhanna on 01/03/14.
@@ -56,17 +57,13 @@ public class LoanAccountsListAdapter extends BaseAdapter {
     public View getView(int i, View view, ViewGroup viewGroup) {
 
         ReusableViewHolder reusableViewHolder;
-        RowAccountItemBinding binding;
 
         if (view == null) {
-            binding = RowAccountItemBinding
-                    .inflate(layoutInflater, viewGroup, false);
-            reusableViewHolder = new ReusableViewHolder(binding);
-            reusableViewHolder.view = binding.getRoot();
-            reusableViewHolder.view.setTag(reusableViewHolder);
+            view = layoutInflater.inflate(R.layout.row_account_item, null);
+            reusableViewHolder = new ReusableViewHolder(view);
+            view.setTag(reusableViewHolder);
         } else {
             reusableViewHolder = (ReusableViewHolder) view.getTag();
-            reusableViewHolder.view = view;
         }
 
         if (loanAccountList.get(i).getStatus().getActive()) {
@@ -103,23 +100,21 @@ public class LoanAccountsListAdapter extends BaseAdapter {
         reusableViewHolder.tv_amount.setEllipsize(TextUtils.TruncateAt.END);
         reusableViewHolder.tv_accountNumber.setText(loanAccountList.get(i).getAccountNo());
 
-        return reusableViewHolder.view;
+        return view;
     }
 
 
     public static class ReusableViewHolder {
 
-        private View view;
+        @BindView(R.id.tv_amount)
         TextView tv_amount;
+        @BindView(R.id.tv_accountNumber)
         TextView tv_accountNumber;
+        @BindView(R.id.view_status_indicator)
         View view_status_indicator;
 
-        public ReusableViewHolder(RowAccountItemBinding binding) {
-
-            tv_amount = binding.tvAmount;
-            tv_accountNumber = binding.tvAccountNumber;
-            view_status_indicator = binding.viewStatusIndicator;
-
+        public ReusableViewHolder(View view) {
+            ButterKnife.bind(this, view);
         }
 
     }

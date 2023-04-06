@@ -7,22 +7,23 @@ package com.mifos.mifosxdroid.dialogfragments.loanchargedialog;
 
 import android.app.Dialog;
 import android.os.Bundle;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
-
-import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
 
 import com.mifos.mifosxdroid.R;
 import com.mifos.mifosxdroid.core.MifosBaseActivity;
 import com.mifos.mifosxdroid.core.ProgressableDialogFragment;
 import com.mifos.mifosxdroid.core.util.Toaster;
-import com.mifos.mifosxdroid.databinding.DialogFragmentChargeBinding;
 import com.mifos.mifosxdroid.dialogfragments.chargedialog.OnChargeCreateListener;
 import com.mifos.mifosxdroid.uihelpers.MFDatePicker;
 import com.mifos.objects.client.ChargeCreationResponse;
@@ -43,6 +44,9 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import okhttp3.ResponseBody;
 
 /**
@@ -54,7 +58,23 @@ public class LoanChargeDialogFragment extends ProgressableDialogFragment impleme
         MFDatePicker.OnDatePickListener, LoanChargeDialogMvpView {
 
     public final String LOG_TAG = getClass().getSimpleName();
-    private DialogFragmentChargeBinding binding;
+
+    private View rootView;
+
+    @BindView(R.id.sp_charge_name)
+    Spinner spChargeName;
+
+    @BindView(R.id.amount_due_charge)
+    EditText etAmountDue;
+
+    @BindView(R.id.et_date)
+    EditText etChargeDueDate;
+
+    @BindView(R.id.et_charge_locale)
+    EditText etChargeLocale;
+
+    @BindView(R.id.bt_save_charge)
+    Button btnSaveCharge;
 
     @Inject
     LoanChargeDialogPresenter mLoanChargeDialogPresenter;
@@ -102,43 +122,36 @@ public class LoanChargeDialogFragment extends ProgressableDialogFragment impleme
         // Inflate the layout for this fragment
         if (getActivity().getActionBar() != null)
             getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
+        rootView = inflater.inflate(R.layout.dialog_fragment_charge, null);
 
-        binding = DialogFragmentChargeBinding.inflate(inflater, container, false);
+        ButterKnife.bind(this, rootView);
         mLoanChargeDialogPresenter.attachView(this);
 
         inflateDueDate();
         inflateChargesSpinner();
 
-        return binding.getRoot();
+        return rootView;
     }
 
-    @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        binding.btSaveCharge.setOnClickListener(view1 -> createCharge());
-        binding.etDate.setOnClickListener(view1 -> inflateDatePicker());
-    }
-
+    @OnClick(R.id.bt_save_charge)
     public void createCharge() {
 
-        if (binding.amountDueCharge.getText().toString().isEmpty()) {
-            Toaster.show(binding.getRoot(), getString(R.string.amount)
+        if (etAmountDue.getText().toString().isEmpty()) {
+            Toaster.show(rootView, getString(R.string.amount)
                     + " " + getString(R.string.error_cannot_be_empty));
             return;
         }
         createdCharge = new Charges();
         createdCharge.setId(chargeId);
-        createdCharge.setAmount(Double.parseDouble(binding.amountDueCharge
-                .getEditableText().toString()));
+        createdCharge.setAmount(Double.parseDouble(etAmountDue.getEditableText().toString()));
         createdCharge.setName(chargeName);
 
         dueDateAsIntegerList = DateHelper.convertDateAsReverseInteger(dueDateString);
         createdCharge.setDueDate(dueDateAsIntegerList);
 
         ChargesPayload chargesPayload = new ChargesPayload();
-        chargesPayload.setAmount(binding.amountDueCharge.getEditableText().toString());
-        chargesPayload.setLocale(binding.etChargeLocale.getEditableText().toString());
+        chargesPayload.setAmount(etAmountDue.getEditableText().toString());
+        chargesPayload.setLocale(etChargeLocale.getEditableText().toString());
         chargesPayload.setDueDate(dueDateString);
         chargesPayload.setDateFormat("dd MMMM yyyy");
         chargesPayload.setChargeId(chargeId);
@@ -151,7 +164,7 @@ public class LoanChargeDialogFragment extends ProgressableDialogFragment impleme
     public void onDatePicked(String date) {
         dueDateString = DateHelper.getDateAsStringUsedForCollectionSheetPayload(date)
                 .replace("-", " ");
-        binding.etDate.setText(dueDateString);
+        etChargeDueDate.setText(dueDateString);
     }
 
     private void inflateChargesSpinner() {
@@ -168,9 +181,10 @@ public class LoanChargeDialogFragment extends ProgressableDialogFragment impleme
         dueDateString = DateHelper.getDateAsStringUsedForCollectionSheetPayload(receivedDate)
                 .replace("-", " ");
         dueDateAsIntegerList = DateHelper.convertDateAsListOfInteger(dueDateString);
-        binding.etDate.setText(dueDateString);
+        etChargeDueDate.setText(dueDateString);
     }
 
+    @OnClick(R.id.et_date)
     public void inflateDatePicker() {
         mfDatePicker.show(getActivity().getSupportFragmentManager(), FragmentConstants
                 .DFRAG_DATE_PICKER);
@@ -217,8 +231,8 @@ public class LoanChargeDialogFragment extends ProgressableDialogFragment impleme
                 android.R.layout.simple_spinner_item, chargesNames);
         chargesAdapter.setDropDownViewResource(android.R.layout
                 .simple_spinner_dropdown_item);
-        binding.spChargeName.setAdapter(chargesAdapter);
-        binding.spChargeName.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        spChargeName.setAdapter(chargesAdapter);
+        spChargeName.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long
                     l) {
@@ -245,14 +259,14 @@ public class LoanChargeDialogFragment extends ProgressableDialogFragment impleme
             createdCharge.setId(chargeCreationResponse.getResourceId());
             onChargeCreateListener.onChargeCreatedSuccess(createdCharge);
         } else {
-            Toaster.show(binding.getRoot(), getString(R.string.message_charge_created_success));
+            Toaster.show(rootView, getString(R.string.message_charge_created_success));
         }
         getDialog().dismiss();
     }
 
     @Override
     public void showError(String s) {
-        Toaster.show(binding.getRoot(), s);
+        Toaster.show(rootView, s);
     }
 
     @Override
@@ -260,7 +274,7 @@ public class LoanChargeDialogFragment extends ProgressableDialogFragment impleme
         if (onChargeCreateListener != null) {
             onChargeCreateListener.onChargeCreatedFailure(errorMessage);
         } else {
-            Toaster.show(binding.getRoot(), errorMessage);
+            Toaster.show(rootView, errorMessage);
         }
     }
 

@@ -6,23 +6,22 @@
 package com.mifos.mifosxdroid.adapters;
 
 import android.content.Context;
+import androidx.core.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import androidx.core.content.ContextCompat;
-
 import com.mifos.mifosxdroid.R;
-import com.mifos.mifosxdroid.databinding.RowGroupListBinding;
 import com.mifos.objects.client.Status;
 import com.mifos.objects.group.Group;
 
 import java.util.ArrayList;
 import java.util.List;
 
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by ishankhanna on 28/06/14.
@@ -60,16 +59,13 @@ public class GroupListAdapter extends BaseAdapter {
     public View getView(int i, View view, ViewGroup viewGroup) {
 
         ReusableGroupViewHolder reusableGroupViewHolder;
-        RowGroupListBinding binding;
 
         if (view == null) {
-            binding = RowGroupListBinding.inflate(layoutInflater , viewGroup,  false);
-            reusableGroupViewHolder = new ReusableGroupViewHolder(binding);
-            reusableGroupViewHolder.view = binding.getRoot();
-            reusableGroupViewHolder.view.setTag(reusableGroupViewHolder);
+            view = layoutInflater.inflate(R.layout.row_group_list, null);
+            reusableGroupViewHolder = new ReusableGroupViewHolder(view);
+            view.setTag(reusableGroupViewHolder);
         } else {
             reusableGroupViewHolder = (ReusableGroupViewHolder) view.getTag();
-            reusableGroupViewHolder.view = view;
         }
 
         Group group = groups.get(i);
@@ -94,22 +90,22 @@ public class GroupListAdapter extends BaseAdapter {
                     .string.inactive));
         }
 
-        return reusableGroupViewHolder.view;
+        return view;
     }
 
     public static class ReusableGroupViewHolder {
 
-        private View view;
+        @BindView(R.id.tv_group_name)
         TextView tv_groupName;
+        @BindView(R.id.tv_office_name)
         TextView tv_officeName;
+        @BindView(R.id.view_status_indicator)
         View view_statusIndicator;
+        @BindView(R.id.tv_status_text)
         TextView tv_statusText;
 
-        public ReusableGroupViewHolder(RowGroupListBinding binding) {
-            tv_groupName = binding.tvGroupName;
-            tv_officeName = binding.tvOfficeName;
-            view_statusIndicator = binding.viewStatusIndicator;
-            tv_statusText = binding.tvStatusText;
+        public ReusableGroupViewHolder(View view) {
+            ButterKnife.bind(this, view);
         }
 
 

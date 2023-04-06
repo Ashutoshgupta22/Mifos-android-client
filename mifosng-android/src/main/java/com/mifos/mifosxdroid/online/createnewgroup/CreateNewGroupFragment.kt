@@ -11,11 +11,11 @@ import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
+import android.widget.*
 import android.widget.AdapterView.OnItemSelectedListener
-import android.widget.ArrayAdapter
-import android.widget.Toast
 import androidx.fragment.app.DialogFragment
+import butterknife.BindView
+import butterknife.ButterKnife
 import com.mifos.exceptions.InvalidTextInputException
 import com.mifos.exceptions.RequiredFieldException
 import com.mifos.exceptions.ShortOfLengthException
@@ -23,7 +23,6 @@ import com.mifos.mifosxdroid.R
 import com.mifos.mifosxdroid.core.MifosBaseActivity
 import com.mifos.mifosxdroid.core.ProgressableFragment
 import com.mifos.mifosxdroid.core.util.Toaster
-import com.mifos.mifosxdroid.databinding.FragmentCreateNewGroupBinding
 import com.mifos.mifosxdroid.online.GroupsActivity
 import com.mifos.mifosxdroid.uihelpers.MFDatePicker
 import com.mifos.mifosxdroid.uihelpers.MFDatePicker.OnDatePickListener
@@ -40,7 +39,38 @@ import javax.inject.Inject
 //TODO A button to Continue or Finish the GroupCreation.
 class CreateNewGroupFragment : ProgressableFragment(), OnDatePickListener, CreateNewGroupMvpView, OnItemSelectedListener {
     private val LOG_TAG = javaClass.simpleName
-    private lateinit var binding: FragmentCreateNewGroupBinding
+
+    @JvmField
+    @BindView(R.id.et_group_name)
+    var et_groupName: EditText? = null
+
+    @JvmField
+    @BindView(R.id.et_group_external_id)
+    var et_groupexternalId: EditText? = null
+
+    @JvmField
+    @BindView(R.id.cb_group_active_status)
+    var cb_groupActiveStatus: CheckBox? = null
+
+    @JvmField
+    @BindView(R.id.tv_group_submission_date)
+    var tv_submissionDate: TextView? = null
+
+    @JvmField
+    @BindView(R.id.tv_group_activationDate)
+    var tv_activationDate: TextView? = null
+
+    @JvmField
+    @BindView(R.id.sp_group_offices)
+    var sp_offices: Spinner? = null
+
+    @JvmField
+    @BindView(R.id.btn_submit)
+    var bt_submit: Button? = null
+
+    @JvmField
+    @BindView(R.id.layout_submission)
+    var layout_submission: LinearLayout? = null
 
     @JvmField
     @Inject
@@ -48,6 +78,7 @@ class CreateNewGroupFragment : ProgressableFragment(), OnDatePickListener, Creat
     var activationdateString: String? = null
     var officeId = 0
     var result = true
+    lateinit var rootView: View
     var dateofsubmissionstring: String? = null
     private var mfDatePicker: DialogFragment? = null
     private var newDatePicker: DialogFragment? = null
@@ -67,7 +98,8 @@ class CreateNewGroupFragment : ProgressableFragment(), OnDatePickListener, Creat
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        binding = FragmentCreateNewGroupBinding.inflate(inflater,container,false)
+        rootView = inflater.inflate(R.layout.fragment_create_new_group, null)
+        ButterKnife.bind(this, rootView)
         mCreateNewGroupPresenter!!.attachView(this)
         inflateOfficesSpinner()
         inflateSubmissionDate()
@@ -75,23 +107,23 @@ class CreateNewGroupFragment : ProgressableFragment(), OnDatePickListener, Creat
         mCreateNewGroupPresenter!!.loadOffices()
 
         //client active checkbox onCheckedListener
-        binding.cbGroupActiveStatus.setOnCheckedChangeListener { compoundButton, isChecked ->
+        cb_groupActiveStatus!!.setOnCheckedChangeListener { compoundButton, isChecked ->
             if (isChecked) {
-                binding.layoutSubmission.visibility = View.VISIBLE
+                layout_submission!!.visibility = View.VISIBLE
             } else {
-                binding.layoutSubmission.visibility = View.GONE
+                layout_submission!!.visibility = View.GONE
             }
         }
-        activationdateString = binding.tvGroupActivationDate.text.toString()
+        activationdateString = tv_activationDate!!.text.toString()
         activationdateString = DateHelper.getDateAsStringUsedForCollectionSheetPayload(activationdateString).replace("-", " ")
-        dateofsubmissionstring = binding.tvGroupSubmissionDate.text.toString()
+        dateofsubmissionstring = tv_submissionDate!!.text.toString()
         dateofsubmissionstring = DateHelper.getDateAsStringUsedForDateofBirth(dateofsubmissionstring).replace("-", " ")
-        binding.btnSubmit.setOnClickListener {
+        bt_submit!!.setOnClickListener {
             if (Network.isOnline(context)) {
                 val groupPayload = GroupPayload()
-                groupPayload.name = binding.etGroupName.editableText.toString()
-                groupPayload.externalId = binding.etGroupExternalId.editableText.toString()
-                groupPayload.isActive = binding.cbGroupActiveStatus.isChecked
+                groupPayload.name = et_groupName!!.editableText.toString()
+                groupPayload.externalId = et_groupexternalId!!.editableText.toString()
+                groupPayload.isActive = cb_groupActiveStatus!!.isChecked
                 groupPayload.activationDate = activationdateString
                 groupPayload.setSubmissionDate(dateofsubmissionstring)
                 groupPayload.officeId = officeId
@@ -99,10 +131,10 @@ class CreateNewGroupFragment : ProgressableFragment(), OnDatePickListener, Creat
                 groupPayload.locale = "en"
                 initiateGroupCreation(groupPayload)
             } else {
-                Toaster.show(binding.root, R.string.error_network_not_available, Toaster.LONG)
+                Toaster.show(rootView, R.string.error_network_not_available, Toaster.LONG)
             }
         }
-        return binding.root
+        return rootView
     }
 
     private fun initiateGroupCreation(groupPayload: GroupPayload) {
@@ -117,40 +149,40 @@ class CreateNewGroupFragment : ProgressableFragment(), OnDatePickListener, Creat
         mOfficesAdapter = ArrayAdapter(requireActivity(), android.R.layout.simple_spinner_item,
                 mListOffices)
         mOfficesAdapter!!.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spGroupOffices.adapter = mOfficesAdapter
-        binding.spGroupOffices.onItemSelectedListener = this
+        sp_offices!!.adapter = mOfficesAdapter
+        sp_offices!!.onItemSelectedListener = this
     }
 
     fun inflateSubmissionDate() {
         mfDatePicker = MFDatePicker.newInsance(this)
-        binding.tvGroupSubmissionDate.text = MFDatePicker.getDatePickedAsString()
-        binding.tvGroupSubmissionDate.setOnClickListener { (mfDatePicker as MFDatePicker?)?.show(requireActivity().supportFragmentManager, FragmentConstants.DFRAG_DATE_PICKER) }
+        tv_submissionDate!!.text = MFDatePicker.getDatePickedAsString()
+        tv_submissionDate!!.setOnClickListener { (mfDatePicker as MFDatePicker?)?.show(requireActivity().supportFragmentManager, FragmentConstants.DFRAG_DATE_PICKER) }
     }
 
     fun inflateActivationDate() {
         newDatePicker = MFDatePicker.newInsance(this)
-        binding.tvGroupActivationDate.text = MFDatePicker.getDatePickedAsString()
-        binding.tvGroupActivationDate.setOnClickListener { (newDatePicker as MFDatePicker?)?.show(requireActivity().supportFragmentManager, FragmentConstants.DFRAG_DATE_PICKER) }
+        tv_activationDate!!.text = MFDatePicker.getDatePickedAsString()
+        tv_activationDate!!.setOnClickListener { (newDatePicker as MFDatePicker?)?.show(requireActivity().supportFragmentManager, FragmentConstants.DFRAG_DATE_PICKER) }
     }
 
     override fun onDatePicked(date: String) {
-        binding.tvGroupSubmissionDate.text = date
-        binding.tvGroupActivationDate.text = date
+        tv_submissionDate!!.text = date
+        tv_activationDate!!.text = date
     }
 
     val isGroupNameValid: Boolean
         get() {
             result = true
             try {
-                if (TextUtils.isEmpty(binding.etGroupName.editableText.toString())) {
+                if (TextUtils.isEmpty(et_groupName!!.editableText.toString())) {
                     throw RequiredFieldException(resources.getString(R.string.group_name),
                             resources.getString(R.string.error_cannot_be_empty))
                 }
-                if (binding.etGroupName.editableText.toString().trim { it <= ' ' }.length < 4 && binding.etGroupName
+                if (et_groupName!!.editableText.toString().trim { it <= ' ' }.length < 4 && et_groupName!!
                                 .getEditableText().toString().trim { it <= ' ' }.length > 0) {
                     throw ShortOfLengthException(resources.getString(R.string.group_name), 4)
                 }
-                if (!ValidationUtil.isNameValid(binding.etGroupName.editableText.toString())) {
+                if (!ValidationUtil.isNameValid(et_groupName!!.editableText.toString())) {
                     throw InvalidTextInputException(resources.getString(R.string.group_name)
                             , resources.getString(R.string.error_should_contain_only),
                             InvalidTextInputException.TYPE_ALPHABETS)

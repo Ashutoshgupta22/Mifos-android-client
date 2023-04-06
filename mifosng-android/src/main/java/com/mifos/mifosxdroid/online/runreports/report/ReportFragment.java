@@ -2,6 +2,7 @@ package com.mifos.mifosxdroid.online.runreports.report;
 
 import android.graphics.Typeface;
 import android.os.Bundle;
+import androidx.annotation.Nullable;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -9,26 +10,23 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.Nullable;
-
 import com.mifos.mifosxdroid.R;
 import com.mifos.mifosxdroid.core.MifosBaseActivity;
 import com.mifos.mifosxdroid.core.MifosBaseFragment;
-import com.mifos.mifosxdroid.databinding.FragmentClientReportBinding;
+import com.mifos.mifosxdroid.views.scrollview.CustomScrollView;
 import com.mifos.mifosxdroid.views.scrollview.ScrollChangeListener;
 import com.mifos.objects.runreports.ColumnHeader;
 import com.mifos.objects.runreports.DataRow;
 import com.mifos.objects.runreports.FullParameterListResponse;
 import com.mifos.utils.Constants;
-
 import java.util.Date;
-
 import javax.inject.Inject;
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by Tarun on 05-08-17.
@@ -37,11 +35,16 @@ import javax.inject.Inject;
 public class ReportFragment extends MifosBaseFragment implements ReportMvpView,
         ScrollChangeListener {
 
-    private FragmentClientReportBinding binding;
+    @BindView(R.id.table_report)
+    TableLayout tableReport;
+
+    @BindView(R.id.sv_horizontal)
+    CustomScrollView scrollView;
 
     @Inject
     ReportPresenter presenter;
 
+    private View rootView;
     private FullParameterListResponse report;
 
     private int page = 0;
@@ -66,24 +69,23 @@ public class ReportFragment extends MifosBaseFragment implements ReportMvpView,
     @Override
     public View onCreateView(LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-
-        binding = FragmentClientReportBinding
-                .inflate(inflater, container, false);
+        rootView = inflater.inflate(R.layout.fragment_client_report, container, false);
         setHasOptionsMenu(true);
+        ButterKnife.bind(this, rootView);
         presenter.attachView(this);
 
         long time = new Date().getTime();
         report = getArguments().getParcelable(Constants.REPORT_NAME);
         setUpUi();
 
-        return binding.getRoot();
+        return rootView;
     }
 
     private void setUpUi() {
         showProgressbar(true);
         setUpHeading();
 
-        binding.svHorizontal.setScrollChangeListener(this);
+        scrollView.setScrollChangeListener(this);
 
 
         if (report.getData().size() > 0) {
@@ -115,7 +117,7 @@ public class ReportFragment extends MifosBaseFragment implements ReportMvpView,
                     break;
             }
         }
-        binding.tableReport.addView(row);
+        tableReport.addView(row);
     }
 
     private void setUpValues() {
@@ -149,7 +151,7 @@ public class ReportFragment extends MifosBaseFragment implements ReportMvpView,
                         break;
                 }
             }
-            binding.tableReport.addView(row);
+            tableReport.addView(row);
         }
     }
 
@@ -180,10 +182,8 @@ public class ReportFragment extends MifosBaseFragment implements ReportMvpView,
 
     @Override
     public void onScrollChanged(int x, int y, int oldx, int oldy) {
-        View view = binding.svHorizontal
-                .getChildAt(binding.svHorizontal.getChildCount() - 1);
-        int diff = (view.getBottom() - (binding.svHorizontal.getHeight()
-                + binding.svHorizontal.getScrollY()));
+        View view = scrollView.getChildAt(scrollView.getChildCount() - 1);
+        int diff = (view.getBottom() - (scrollView.getHeight() + scrollView.getScrollY()));
         if (diff == 0) {
             if (bottom >= 2) {
                 bottom = 0;

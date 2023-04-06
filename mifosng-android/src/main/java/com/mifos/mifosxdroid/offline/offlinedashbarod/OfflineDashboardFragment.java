@@ -5,18 +5,16 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.mifos.mifosxdroid.R;
 import com.mifos.mifosxdroid.adapters.OfflineDashboardAdapter;
 import com.mifos.mifosxdroid.core.MifosBaseActivity;
 import com.mifos.mifosxdroid.core.MifosBaseFragment;
 import com.mifos.mifosxdroid.core.util.Toaster;
-import com.mifos.mifosxdroid.databinding.FragmentOfflineDashboardBinding;
 import com.mifos.mifosxdroid.offline.synccenterpayloads.SyncCenterPayloadActivity;
 import com.mifos.mifosxdroid.offline.syncclientpayloads.SyncClientPayloadActivity;
 import com.mifos.mifosxdroid.offline.syncgrouppayloads.SyncGroupPayloadsActivity;
@@ -34,6 +32,12 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * This Fragment is the Dashboard of the Offline sync of Clients, Groups, LoanRepayment etc.
@@ -59,7 +63,23 @@ import javax.inject.Inject;
 public class OfflineDashboardFragment extends MifosBaseFragment implements OfflineDashboardMvpView {
 
     public final String LOG_TAG = getClass().getSimpleName();
-    private FragmentOfflineDashboardBinding binding;
+
+    @BindView(R.id.rv_offline_dashboard)
+    RecyclerView rv_offline_dashboard;
+
+    @BindView(R.id.pb_offline_dashboard)
+    ProgressBar pb_offline_dashboard;
+
+    @BindView(R.id.noPayloadText)
+    TextView mNoPayloadText;
+
+    @BindView(R.id.noPayloadIcon)
+    ImageView mNoPayloadIcon;
+
+    @BindView(R.id.ll_error)
+    LinearLayout ll_error;
+
+    View rootView;
 
     @Inject
     OfflineDashboardPresenter mOfflineDashboardPresenter;
@@ -94,32 +114,31 @@ public class OfflineDashboardFragment extends MifosBaseFragment implements Offli
     }
 
     @Override
-    public View onCreateView( LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        rootView = inflater.inflate(R.layout.fragment_offline_dashboard, container, false);
 
-        binding = FragmentOfflineDashboardBinding
-                .inflate(inflater, container, false);
         setToolbarTitle(getActivity().getResources().getString(R.string.offline));
 
-        ((MifosBaseActivity) getActivity()).getActivityComponent()
-                .inject(this);
+        ((MifosBaseActivity) getActivity()).getActivityComponent().inject(this);
         mOfflineDashboardPresenter.attachView(this);
+        ButterKnife.bind(this, rootView);
 
         LinearLayoutManager mLayoutManager = new GridLayoutManager(getActivity(), GRID_COUNT);
         mLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        binding.rvOfflineDashboard.setLayoutManager(mLayoutManager);
-        binding.rvOfflineDashboard.setHasFixedSize(true);
-        binding.rvOfflineDashboard.setItemAnimator(new DefaultItemAnimator());
-        binding.rvOfflineDashboard.addItemDecoration(new ItemOffsetDecoration(getActivity(),
+        rv_offline_dashboard.setLayoutManager(mLayoutManager);
+        rv_offline_dashboard.setHasFixedSize(true);
+        rv_offline_dashboard.setItemAnimator(new DefaultItemAnimator());
+        rv_offline_dashboard.addItemDecoration(new ItemOffsetDecoration(getActivity(),
                 R.dimen.item_offset));
         mOfflineDashboardAdapter = new OfflineDashboardAdapter(position -> {
                 startPayloadActivity(mPayloadClasses.get(position));
                 return null;
             }
         );
-        binding.rvOfflineDashboard.setAdapter(mOfflineDashboardAdapter);
+        rv_offline_dashboard.setAdapter(mOfflineDashboardAdapter);
 
-        return binding.getRoot();
+        return rootView;
     }
 
     @Override
@@ -247,25 +266,25 @@ public class OfflineDashboardFragment extends MifosBaseFragment implements Offli
     @Override
     public void showNoPayloadToShow() {
         if (mPayloadIndex == 0) {
-            binding.rvOfflineDashboard.setVisibility(View.GONE);
-            binding.llError.setVisibility(View.VISIBLE);
-            binding.noPayloadText.setText(getActivity()
+            rv_offline_dashboard.setVisibility(View.GONE);
+            ll_error.setVisibility(View.VISIBLE);
+            mNoPayloadText.setText(getActivity()
                     .getResources().getString(R.string.nothing_to_sync));
-            binding.noPayloadIcon.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp);
+            mNoPayloadIcon.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp);
         }
     }
 
     @Override
     public void showError(int stringId) {
-        Toaster.show(binding.getRoot(), getResources().getString(stringId));
+        Toaster.show(rootView, getResources().getString(stringId));
     }
 
     @Override
     public void showProgressbar(boolean b) {
         if (b) {
-            binding.pbOfflineDashboard.setVisibility(View.VISIBLE);
+            pb_offline_dashboard.setVisibility(View.VISIBLE);
         } else {
-            binding.pbOfflineDashboard.setVisibility(View.GONE);
+            pb_offline_dashboard.setVisibility(View.GONE);
         }
     }
 

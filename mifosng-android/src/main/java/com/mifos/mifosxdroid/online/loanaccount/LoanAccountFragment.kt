@@ -8,16 +8,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
+import android.widget.*
 import android.widget.AdapterView.OnItemSelectedListener
-import android.widget.ArrayAdapter
-import android.widget.Toast
 import androidx.fragment.app.DialogFragment
+import butterknife.BindView
+import butterknife.ButterKnife
+import butterknife.OnClick
 import com.mifos.mifosxdroid.R
 import com.mifos.mifosxdroid.core.MifosBaseActivity
 import com.mifos.mifosxdroid.core.ProgressableDialogFragment
 import com.mifos.mifosxdroid.core.util.Toaster
-import com.mifos.mifosxdroid.databinding.FragmentAddLoanBinding
 import com.mifos.mifosxdroid.online.datatablelistfragment.DataTableListFragment
 import com.mifos.mifosxdroid.uihelpers.MFDatePicker
 import com.mifos.mifosxdroid.uihelpers.MFDatePicker.OnDatePickListener
@@ -30,6 +30,7 @@ import com.mifos.services.data.LoansPayload
 import com.mifos.utils.Constants
 import com.mifos.utils.DateHelper
 import com.mifos.utils.FragmentConstants
+import java.util.*
 import javax.inject.Inject
 import kotlin.properties.Delegates
 
@@ -39,12 +40,110 @@ import kotlin.properties.Delegates
  *
  * Use this  Fragment to Create and/or Update loan
  */
-class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, LoanAccountMvpView,
-    OnItemSelectedListener {
+class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, LoanAccountMvpView, OnItemSelectedListener {
     val LOG_TAG = javaClass.simpleName
-    private lateinit var binding: FragmentAddLoanBinding
+    lateinit var rootView: View
 
-    @JvmField
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_lproduct)
+    var spLoanProduct: Spinner? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_loan_purpose)
+    var spLoanPurpose: Spinner? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.tv_submittedon_date)
+    var tvSubmittedOnDate: TextView? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.et_client_external_id)
+    var etClientExternalId: EditText? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.et_principal)
+    var etPrincipal: EditText? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_linking_options)
+    var spLinkingOptions: Spinner? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.et_loanterm)
+    var etLoanTerm: EditText? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.et_numberofrepayments)
+    var etNumberOfRepayments: EditText? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.et_repaidevery)
+    var etRepaidEvery: EditText? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_payment_periods)
+    var spPaymentPeriods: Spinner? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.tv_repaid_nthfreq_label_on)
+    var tvRepaidNthFreqLabelOn: TextView? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_repayment_freq_nth_day)
+    var spRepaymentFreqNthDay: Spinner? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_loan_term_periods)
+    var spLoanTermFrequencyType: Spinner? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_repayment_freq_day_of_week)
+    var spRepaymentFreqDayOfWeek: Spinner? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.et_nominal_interest_rate)
+    var etNominalInterestRate: EditText? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.tv_nominal_rate_year_month)
+    var tvNominalRatePerYearMonth: TextView? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_amortization)
+    var spAmortization: Spinner? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_interestcalculationperiod)
+    var spInterestCalculationPeriod: Spinner? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_repaymentstrategy)
+    var spRepaymentStrategy: Spinner? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_interest_type)
+    var spInterestType: Spinner? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_loan_officer)
+    var spLoanOfficer: Spinner? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.sp_fund)
+    var spFund: Spinner? = null
+
+    @BindView(R.id.cb_calculateinterest)
+    lateinit var cbCalculateInterest: CheckBox
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.tv_disbursementon_date)
+    var tvDisbursementOnDate: TextView? = null
+
+    @kotlin.jvm.JvmField
+    @BindView(R.id.btn_loan_submit)
+    var btnLoanSubmit: Button? = null
+
+    @kotlin.jvm.JvmField
     @Inject
     var mLoanAccountPresenter: LoanAccountPresenter? = null
     var submissionDate: String? = null
@@ -100,7 +199,6 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
     var mLoanFundOptionsAdapter: ArrayAdapter<String>? = null
     var mLoanOfficerOptionsAdapter: ArrayAdapter<String>? = null
     var mInterestTypeOptionsAdapter: ArrayAdapter<String>? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (arguments != null) clientId = requireArguments().getInt(Constants.CLIENT_ID)
@@ -108,32 +206,26 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         activity?.actionBar?.setDisplayHomeAsUpEnabled(true)
-        binding = FragmentAddLoanBinding.inflate(inflater,container,false)
+        rootView = inflater.inflate(R.layout.fragment_add_loan, null)
         (activity as MifosBaseActivity?)!!.activityComponent.inject(this)
+        ButterKnife.bind(this, rootView)
         mLoanAccountPresenter!!.attachView(this)
         inflateSubmissionDate()
         inflateDisbursementDate()
         inflateLoansProductSpinner()
-        disbursementDate = binding.tvDisbursementonDate.text.toString()
-        submissionDate = binding.tvSubmittedonDate.text.toString()
+        disbursementDate = tvDisbursementOnDate!!.text.toString()
+        submissionDate = tvSubmittedOnDate!!.text.toString()
         submissionDate = DateHelper.getDateAsStringUsedForCollectionSheetPayload(submissionDate).replace("-", " ")
         disbursementDate = DateHelper.getDateAsStringUsedForCollectionSheetPayload(disbursementDate).replace("-", " ")
         inflateSpinners()
-        return binding.root
+        return rootView
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        binding.btnLoanSubmit.setOnClickListener { submit() }
-        binding.tvSubmittedonDate.setOnClickListener { setTvSubmittedOnDate() }
-        binding.tvDisbursementonDate.setOnClickListener { setTvDisbursementOnDate() }
-    }
-
+    @OnClick(R.id.btn_loan_submit)
     fun submit() {
         val loansPayload = LoansPayload()
-        loansPayload.isAllowPartialPeriodInterestCalcualtion = binding.cbCalculateinterest
-                .isChecked
+        loansPayload.isAllowPartialPeriodInterestCalcualtion = cbCalculateInterest
+                .isChecked()
         loansPayload.amortizationType = amortizationTypeId
         loansPayload.clientId = clientId
         loansPayload.dateFormat = "dd MMMM yyyy"
@@ -141,14 +233,14 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
         loansPayload.interestCalculationPeriodType = interestCalculationPeriodTypeId
         loansPayload.loanType = "individual"
         loansPayload.locale = "en"
-        loansPayload.numberOfRepayments = binding.etNumberofrepayments.editableText
+        loansPayload.numberOfRepayments = etNumberOfRepayments!!.editableText
                 .toString()
-        loansPayload.principal = binding.etPrincipal.editableText.toString()
+        loansPayload.principal = etPrincipal!!.editableText.toString()
         loansPayload.productId = productId
-        loansPayload.repaymentEvery = binding.etRepaidevery.editableText.toString()
+        loansPayload.repaymentEvery = etRepaidEvery!!.editableText.toString()
         loansPayload.submittedOnDate = submissionDate
         loansPayload.loanPurposeId = loanPurposeId
-        loansPayload.loanTermFrequency = binding.etLoanterm.editableText.toString().toInt()
+        loansPayload.loanTermFrequency = etLoanTerm!!.editableText.toString().toInt()
         loansPayload.loanTermFrequencyType = loanTermFrequency
 
         //loanTermFrequencyType and repaymentFrequencyType should be the same.
@@ -161,7 +253,7 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
         loansPayload.loanOfficerId = loanOfficerId
         loansPayload.linkAccountId = linkAccountId
         interestRatePerPeriod =
-                binding.etNominalInterestRate.editableText.toString().toDouble()
+                etNominalInterestRate!!.editableText.toString().toDouble()
         loansPayload.interestRatePerPeriod = interestRatePerPeriod
         if (hasDataTables) {
             val fragment = DataTableListFragment.newInstance(
@@ -178,12 +270,12 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
 
     override fun onDatePicked(date: String) {
         if (isSubmissionDate) {
-            binding.tvSubmittedonDate.text = date
+            tvSubmittedOnDate!!.text = date
             submissionDate = date
             isSubmissionDate = false
         }
         if (isDisbursebemntDate) {
-            binding.tvDisbursementonDate.text = date
+            tvDisbursementOnDate!!.text = date
             disbursementDate = date
             isDisbursebemntDate = false
         }
@@ -195,83 +287,83 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
         mLoanProductAdapter = ArrayAdapter(requireActivity(), android.R.layout.simple_spinner_item,
                 mListLoanProducts)
         mLoanProductAdapter!!.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spLproduct.adapter = mLoanProductAdapter
-        binding.spLproduct.onItemSelectedListener = this
+        spLoanProduct!!.adapter = mLoanProductAdapter
+        spLoanProduct!!.onItemSelectedListener = this
 
         //Inflating the LoanPurposeOptions
         mLoanPurposeOptionsAdapter = ArrayAdapter(requireActivity(), android.R.layout.simple_spinner_item,
                 mListLoanPurposeOptions)
         mLoanPurposeOptionsAdapter!!.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spLoanPurpose.adapter = mLoanPurposeOptionsAdapter
-        binding.spLoanPurpose.onItemSelectedListener = this
+        spLoanPurpose!!.adapter = mLoanPurposeOptionsAdapter
+        spLoanPurpose!!.onItemSelectedListener = this
 
         //Inflating Linking Options
         mAccountLinkingOptionsAdapter = ArrayAdapter(requireActivity(),
                 android.R.layout.simple_spinner_item, mListAccountLinkingOptions)
         mAccountLinkingOptionsAdapter!!.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spLinkingOptions.adapter = mAccountLinkingOptionsAdapter
-        binding.spLinkingOptions.onItemSelectedListener = this
+        spLinkingOptions!!.adapter = mAccountLinkingOptionsAdapter
+        spLinkingOptions!!.onItemSelectedListener = this
 
         //Inflating AmortizationTypeOptions Spinner
         mAmortizationTypeOptionsAdapter = ArrayAdapter(requireActivity(),
                 android.R.layout.simple_spinner_item, mListAmortizationTypeOptions)
         mAmortizationTypeOptionsAdapter!!.setDropDownViewResource(
                 android.R.layout.simple_spinner_dropdown_item)
-        binding.spAmortization.adapter = mAmortizationTypeOptionsAdapter
-        binding.spAmortization.onItemSelectedListener = this
+        spAmortization!!.adapter = mAmortizationTypeOptionsAdapter
+        spAmortization!!.onItemSelectedListener = this
 
         //Inflating InterestCalculationPeriodTypeOptions Spinner
         mInterestCalculationPeriodTypeOptionsAdapter = ArrayAdapter(requireActivity(),
                 android.R.layout.simple_spinner_item, mListInterestCalculationPeriodTypeOptions)
         mInterestCalculationPeriodTypeOptionsAdapter!!.setDropDownViewResource(
                 android.R.layout.simple_spinner_dropdown_item)
-        binding.spInterestcalculationperiod.adapter = mInterestCalculationPeriodTypeOptionsAdapter
-        binding.spInterestcalculationperiod.onItemSelectedListener = this
+        spInterestCalculationPeriod!!.adapter = mInterestCalculationPeriodTypeOptionsAdapter
+        spInterestCalculationPeriod!!.onItemSelectedListener = this
 
         //Inflate TransactionProcessingStrategyOptions Spinner
         mTransactionProcessingStrategyOptionsAdapter = ArrayAdapter(requireActivity(),
                 android.R.layout.simple_spinner_item, mListTransactionProcessingStrategyOptions)
         mTransactionProcessingStrategyOptionsAdapter!!.setDropDownViewResource(
                 android.R.layout.simple_spinner_dropdown_item)
-        binding.spRepaymentstrategy.adapter = mTransactionProcessingStrategyOptionsAdapter
-        binding.spRepaymentstrategy.onItemSelectedListener = this
+        spRepaymentStrategy!!.adapter = mTransactionProcessingStrategyOptionsAdapter
+        spRepaymentStrategy!!.onItemSelectedListener = this
 
         //Inflate TermFrequencyTypeOptionsAdapter Spinner
         mTermFrequencyTypeOptionsAdapter = ArrayAdapter(requireActivity(),
                 android.R.layout.simple_spinner_item, mListTermFrequencyTypeOptions)
         mTermFrequencyTypeOptionsAdapter!!.setDropDownViewResource(
                 android.R.layout.simple_spinner_dropdown_item)
-        binding.spPaymentPeriods.adapter = mTermFrequencyTypeOptionsAdapter
-        binding.spPaymentPeriods.onItemSelectedListener = this
+        spPaymentPeriods!!.adapter = mTermFrequencyTypeOptionsAdapter
+        spPaymentPeriods!!.onItemSelectedListener = this
 
         //Inflate LoanTerm Frequency Type adapter
         mLoanTermFrequencyTypeAdapter = ArrayAdapter(requireActivity(),
                 android.R.layout.simple_spinner_item, mListLoanTermFrequencyTypeOptions)
         mLoanTermFrequencyTypeAdapter!!.setDropDownViewResource(
                 android.R.layout.simple_spinner_dropdown_item)
-        binding.spLoanTermPeriods.adapter = mLoanTermFrequencyTypeAdapter
-        binding.spLoanTermPeriods.onItemSelectedListener = this
+        spLoanTermFrequencyType!!.adapter = mLoanTermFrequencyTypeAdapter
+        spLoanTermFrequencyType!!.onItemSelectedListener = this
 
         //Inflate FondOptions Spinner
         mLoanFundOptionsAdapter = ArrayAdapter(requireActivity(),
                 android.R.layout.simple_spinner_item, mListLoanFundOptions)
         mLoanFundOptionsAdapter!!.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spFund.adapter = mLoanFundOptionsAdapter
-        binding.spFund.onItemSelectedListener = this
+        spFund!!.adapter = mLoanFundOptionsAdapter
+        spFund!!.onItemSelectedListener = this
 
         //Inflating LoanOfficerOptions Spinner
         mLoanOfficerOptionsAdapter = ArrayAdapter(requireActivity(),
                 android.R.layout.simple_spinner_item, mListLoanOfficerOptions)
         mLoanOfficerOptionsAdapter!!.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spLoanOfficer.adapter = mLoanOfficerOptionsAdapter
-        binding.spLoanOfficer.onItemSelectedListener = this
+        spLoanOfficer!!.adapter = mLoanOfficerOptionsAdapter
+        spLoanOfficer!!.onItemSelectedListener = this
 
         //Inflating InterestTypeOptions Spinner
         mInterestTypeOptionsAdapter = ArrayAdapter(requireActivity(),
                 android.R.layout.simple_spinner_item, mListInterestTypeOptions)
         mInterestTypeOptionsAdapter!!.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spInterestType.adapter = mInterestTypeOptionsAdapter
-        binding.spInterestType.onItemSelectedListener = this
+        spInterestType!!.adapter = mInterestTypeOptionsAdapter
+        spInterestType!!.onItemSelectedListener = this
     }
 
     private fun inflateRepaidMonthSpinners() {
@@ -280,17 +372,17 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
                 mListRepaymentFrequencyNthDayTypeOptions)
         mRepaymentFrequencyNthDayTypeOptionsAdapter!!
                 .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spRepaymentFreqNthDay.adapter = mRepaymentFrequencyNthDayTypeOptionsAdapter
-        binding.spRepaymentFreqNthDay.onItemSelectedListener = this
+        spRepaymentFreqNthDay!!.adapter = mRepaymentFrequencyNthDayTypeOptionsAdapter
+        spRepaymentFreqNthDay!!.onItemSelectedListener = this
         mRepaymentFrequencyDayOfWeekTypeOptionsAdapter = ArrayAdapter(
                 requireActivity(), android.R.layout.simple_spinner_item,
                 mListRepaymentFrequencyDayOfWeekTypeOptions)
         mRepaymentFrequencyDayOfWeekTypeOptionsAdapter!!
                 .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spRepaymentFreqDayOfWeek.adapter = mRepaymentFrequencyDayOfWeekTypeOptionsAdapter
-        binding.spRepaymentFreqDayOfWeek.onItemSelectedListener = this
-        binding.spRepaymentFreqNthDay.setSelection(mListRepaymentFrequencyNthDayTypeOptions.size - 1)
-        binding.spRepaymentFreqDayOfWeek.setSelection(
+        spRepaymentFreqDayOfWeek!!.adapter = mRepaymentFrequencyDayOfWeekTypeOptionsAdapter
+        spRepaymentFreqDayOfWeek!!.onItemSelectedListener = this
+        spRepaymentFreqNthDay!!.setSelection(mListRepaymentFrequencyNthDayTypeOptions.size - 1)
+        spRepaymentFreqDayOfWeek!!.setSelection(
                 mListRepaymentFrequencyDayOfWeekTypeOptions.size - 1)
     }
 
@@ -308,9 +400,10 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
 
     fun inflateSubmissionDate() {
         mfDatePicker = MFDatePicker.newInsance(this)
-        binding.tvSubmittedonDate.text = MFDatePicker.getDatePickedAsString()
+        tvSubmittedOnDate!!.text = MFDatePicker.getDatePickedAsString()
     }
 
+    @OnClick(R.id.tv_submittedon_date)
     fun setTvSubmittedOnDate() {
         isSubmissionDate = true
         mfDatePicker!!.show(requireActivity().supportFragmentManager, FragmentConstants.DFRAG_DATE_PICKER)
@@ -318,9 +411,10 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
 
     fun inflateDisbursementDate() {
         mfDatePicker = MFDatePicker.newInsance(this)
-        binding.tvDisbursementonDate.text = MFDatePicker.getDatePickedAsString()
+        tvDisbursementOnDate!!.text = MFDatePicker.getDatePickedAsString()
     }
 
+    @OnClick(R.id.tv_disbursementon_date)
     fun setTvDisbursementOnDate() {
         isDisbursebemntDate = true
         mfDatePicker!!.show(requireActivity().supportFragmentManager, FragmentConstants.DFRAG_DATE_PICKER)
@@ -417,11 +511,11 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
     }
 
     override fun showMessage(messageId: Int) {
-        Toaster.show(binding.root, messageId)
+        Toaster.show(rootView, messageId)
     }
 
     override fun showFetchingError(s: String?) {
-        Toaster.show(binding.root, s)
+        Toaster.show(rootView, s)
     }
 
     override fun showProgressbar(show: Boolean) {
@@ -452,7 +546,7 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
             R.id.sp_payment_periods -> {
                 loanTermFrequency = mLoanTemplate.termFrequencyTypeOptions[position]
                         .id
-                binding.spLoanTermPeriods.setSelection(loanTermFrequency)
+                spLoanTermFrequencyType!!.setSelection(loanTermFrequency)
                 if (loanTermFrequency == 2) {
                     // Show and inflate Nth day and week spinners
                     showHideRepaidMonthSpinners(View.VISIBLE)
@@ -464,7 +558,7 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
             R.id.sp_loan_term_periods -> {
                 loanTermFrequency = mLoanTemplate.termFrequencyTypeOptions[position]
                         .id
-                binding.spPaymentPeriods.setSelection(loanTermFrequency)
+                spPaymentPeriods!!.setSelection(loanTermFrequency)
                 if (loanTermFrequency == 2) {
                     // Show and inflate Nth day and week spinners
                     showHideRepaidMonthSpinners(View.VISIBLE)
@@ -501,33 +595,34 @@ class LoanAccountFragment : ProgressableDialogFragment(), OnDatePickListener, Lo
 
     override fun onNothingSelected(parent: AdapterView<*>?) {}
     private fun showHideRepaidMonthSpinners(visibility: Int) {
-        binding.spRepaymentFreqNthDay.visibility = visibility
-        binding.spRepaymentFreqDayOfWeek.visibility = visibility
-        binding.tvRepaidNthfreqLabelOn.visibility = visibility
+        spRepaymentFreqNthDay!!.visibility = visibility
+        spRepaymentFreqDayOfWeek!!.visibility = visibility
+        tvRepaidNthFreqLabelOn!!.visibility = visibility
     }
 
     private fun showDefaultValues() {
         interestRatePerPeriod = mLoanTemplate.interestRatePerPeriod
         loanTermFrequency = mLoanTemplate.termPeriodFrequencyType.id
         termFrequency = mLoanTemplate.termFrequency
-        binding.etPrincipal.setText(mLoanTemplate.principal.toString())
-        binding.etNumberofrepayments.setText(mLoanTemplate.numberOfRepayments.toString())
-        binding.tvNominalRateYearMonth.text = mLoanTemplate.interestRateFrequencyType.value
-        binding.etNominalInterestRate.setText(mLoanTemplate.interestRatePerPeriod.toString())
-        binding.etLoanterm.setText(termFrequency.toString())
+        etPrincipal!!.setText(mLoanTemplate.principal.toString())
+        etNumberOfRepayments!!.setText(mLoanTemplate.numberOfRepayments.toString())
+        tvNominalRatePerYearMonth
+                ?.setText(mLoanTemplate.interestRateFrequencyType.value)
+        etNominalInterestRate!!.setText(mLoanTemplate.interestRatePerPeriod.toString())
+        etLoanTerm!!.setText(termFrequency.toString())
         if (mLoanTemplate.repaymentEvery != null) {
             repaymentEvery = mLoanTemplate.repaymentEvery
-            binding.etRepaidevery.setText(repaymentEvery.toString())
+            etRepaidEvery!!.setText(repaymentEvery.toString())
         }
         if (mLoanTemplate.fundId != null) {
             fundId = mLoanTemplate.fundId
-            binding.spFund.setSelection(mLoanTemplate.getFundNameFromId(fundId))
+            spFund!!.setSelection(mLoanTemplate.getFundNameFromId(fundId))
         }
-        binding.spLinkingOptions.setSelection(mListAccountLinkingOptions.size)
+        spLinkingOptions!!.setSelection(mListAccountLinkingOptions.size)
     }
 
     companion object {
-        @JvmStatic
+        @kotlin.jvm.JvmStatic
         fun newInstance(clientId: Int): LoanAccountFragment {
             val loanAccountFragment = LoanAccountFragment()
             val args = Bundle()

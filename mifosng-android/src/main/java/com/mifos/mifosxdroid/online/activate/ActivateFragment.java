@@ -1,20 +1,17 @@
 package com.mifos.mifosxdroid.online.activate;
 
 import android.os.Bundle;
+import androidx.fragment.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
 
 import com.mifos.mifosxdroid.R;
 import com.mifos.mifosxdroid.core.MifosBaseActivity;
 import com.mifos.mifosxdroid.core.MifosBaseFragment;
 import com.mifos.mifosxdroid.core.util.Toaster;
-import com.mifos.mifosxdroid.databinding.FragmentActivateClientBinding;
 import com.mifos.mifosxdroid.uihelpers.MFDatePicker;
 import com.mifos.objects.client.ActivatePayload;
 import com.mifos.utils.Constants;
@@ -23,6 +20,9 @@ import com.mifos.utils.FragmentConstants;
 
 import javax.inject.Inject;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 /**
  * Created by Rajan Maurya on 09/02/17.
@@ -31,11 +31,14 @@ public class ActivateFragment extends MifosBaseFragment implements ActivateMvpVi
         MFDatePicker.OnDatePickListener {
 
     public static final String LOG_TAG = ActivateFragment.class.getSimpleName();
-    private FragmentActivateClientBinding binding;
+
+    @BindView(R.id.tv_activation_date)
+    TextView tvActivationDate;
 
     @Inject
     ActivatePresenter activatePresenter;
 
+    View rootView;
 
     private DialogFragment mfDatePicker;
     private String activationDate;
@@ -64,37 +67,30 @@ public class ActivateFragment extends MifosBaseFragment implements ActivateMvpVi
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        binding = FragmentActivateClientBinding
-                .inflate(inflater, container, false);
+        rootView = inflater.inflate(R.layout.fragment_activate_client, container, false);
+        ButterKnife.bind(this, rootView);
         activatePresenter.attachView(this);
         showUserInterface();
-        return binding.getRoot();
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        binding.btnActivate.setOnClickListener(view1 -> onClickActivationButton());
-        binding.tvActivationDate.setOnClickListener(view1 -> onClickTextViewActivationDate());
+        return rootView;
     }
 
     @Override
     public void showUserInterface() {
         setToolbarTitle(getString(R.string.activate));
         mfDatePicker = MFDatePicker.newInsance(this);
-        binding.tvActivationDate.setText(MFDatePicker.getDatePickedAsString());
-        activationDate = binding.tvActivationDate.getText().toString();
+        tvActivationDate.setText(MFDatePicker.getDatePickedAsString());
+        activationDate = tvActivationDate.getText().toString();
         activationDate = DateHelper.getDateAsStringUsedForCollectionSheetPayload(activationDate)
                 .replace("-", " ");
     }
 
+    @OnClick(R.id.btn_activate)
     void onClickActivationButton() {
         ActivatePayload clientActivate = new ActivatePayload(activationDate);
         activate(clientActivate);
     }
 
+    @OnClick(R.id.tv_activation_date)
     void onClickTextViewActivationDate() {
         mfDatePicker.show(getActivity().getSupportFragmentManager(), FragmentConstants
                 .DFRAG_DATE_PICKER);
@@ -102,7 +98,7 @@ public class ActivateFragment extends MifosBaseFragment implements ActivateMvpVi
 
     @Override
     public void onDatePicked(String date) {
-        binding.tvActivationDate.setText(date);
+        tvActivationDate.setText(date);
         activationDate = DateHelper.getDateAsStringUsedForCollectionSheetPayload(date)
                 .replace("-", " ");
     }
@@ -132,7 +128,7 @@ public class ActivateFragment extends MifosBaseFragment implements ActivateMvpVi
 
     @Override
     public void showError(String errorMessage) {
-        Toaster.show(binding.getRoot(), errorMessage, Toaster.INDEFINITE);
+        Toaster.show(rootView, errorMessage, Toaster.INDEFINITE);
     }
 
     @Override

@@ -1,13 +1,12 @@
 package com.mifos.mifosxdroid.adapters;
 
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.mifos.mifosxdroid.databinding.ItemSyncCenterBinding;
+import com.mifos.mifosxdroid.R;
 import com.mifos.services.data.CenterPayload;
 
 import java.util.ArrayList;
@@ -15,7 +14,8 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by mayankjindal on 04/07/17.
@@ -33,9 +33,9 @@ public class SyncCenterPayloadAdapter extends
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        ItemSyncCenterBinding binding = ItemSyncCenterBinding
-                .inflate(LayoutInflater.from(parent.getContext()), parent, false);
-        return new ViewHolder(binding);
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_sync_center, parent, false);
+        return new ViewHolder(view);
     }
 
     @Override
@@ -68,24 +68,24 @@ public class SyncCenterPayloadAdapter extends
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
+        @BindView(R.id.tv_db_name)
         TextView tvName;
 
+        @BindView(R.id.tv_db_office_id)
         TextView tvOfficeId;
 
+        @BindView(R.id.tv_db_activation_date)
         TextView tvActivationDate;
 
+        @BindView(R.id.tv_db_active_status)
         TextView tvActiveStatus;
 
+        @BindView(R.id.tv_error_message)
         TextView tvErrorMessage;
 
-        public ViewHolder(ItemSyncCenterBinding binding) {
-            super(binding.getRoot());
-
-            tvName  = binding.tvDbName;
-            tvOfficeId = binding.tvDbOfficeId;
-            tvActivationDate = binding.tvDbActivationDate;
-            tvActiveStatus = binding.tvDbActiveStatus;
-            tvErrorMessage = binding.tvErrorMessage;
+        public ViewHolder(View v) {
+            super(v);
+            ButterKnife.bind(this, v);
         }
     }
 }

@@ -1,6 +1,9 @@
 package com.mifos.mifosxdroid.online.runreports.reportdetail;
 
 import android.os.Bundle;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentTransaction;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -12,19 +15,14 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentTransaction;
 
 import com.mifos.mifosxdroid.R;
 import com.mifos.mifosxdroid.core.MifosBaseActivity;
 import com.mifos.mifosxdroid.core.MifosBaseFragment;
 import com.mifos.mifosxdroid.core.util.Toaster;
-import com.mifos.mifosxdroid.databinding.FragmentClientReportDetailsBinding;
 import com.mifos.mifosxdroid.online.runreports.report.ReportFragment;
 import com.mifos.mifosxdroid.uihelpers.MFDatePicker;
 import com.mifos.objects.runreports.DataRow;
@@ -42,6 +40,8 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by Tarun on 04-08-17.
@@ -50,17 +50,22 @@ import javax.inject.Inject;
 public class ReportDetailFragment extends MifosBaseFragment
         implements ReportDetailMvpView, MFDatePicker.OnDatePickListener {
 
-    private FragmentClientReportDetailsBinding binding;
+    @BindView(R.id.tv_report_name)
     TextView tvReportName;
 
+    @BindView(R.id.tv_report_type)
     TextView tvReportType;
 
+    @BindView(R.id.tv_report_category)
     TextView tvReportCategory;
 
+    @BindView(R.id.table_details)
+    TableLayout tableDetails;
 
     @Inject
     ReportDetailPresenter presenter;
 
+    private View rootView;
     private ClientReportTypeItem reportItem;
 
     private boolean fetchLoanOfficer = false;
@@ -102,19 +107,15 @@ public class ReportDetailFragment extends MifosBaseFragment
     @Override
     public View onCreateView(LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        binding = FragmentClientReportDetailsBinding
-                .inflate(inflater, container, false);
+        rootView = inflater.inflate(R.layout.fragment_client_report_details, container, false);
         setHasOptionsMenu(true);
+        ButterKnife.bind(this, rootView);
         presenter.attachView(this);
 
         reportItem = getArguments().getParcelable(Constants.CLIENT_REPORT_ITEM);
-
-        tvReportName = binding.includeClientReportDetails.tvReportName;
-        tvReportType = binding.includeClientReportDetails.tvReportType;
-        tvReportCategory = binding.includeClientReportDetails.tvReportCategory;
         setUpUi();
 
-        return binding.getRoot();
+        return rootView;
     }
 
     private void setUpUi() {
@@ -226,12 +227,12 @@ public class ReportDetailFragment extends MifosBaseFragment
 
             }
         });
-        binding.tableDetails.addView(row);
+        tableDetails.addView(row);
     }
 
     private void runReport() {
-        if (binding.tableDetails.getChildCount() < 1) {
-            Toaster.show(binding.getRoot(), getString(R.string.msg_report_empty));
+        if (tableDetails.getChildCount() < 1) {
+            Toaster.show(rootView, getString(R.string.msg_report_empty));
         } else {
             Integer fundId;
             Integer loanOfficeId;
@@ -250,8 +251,8 @@ public class ReportDetailFragment extends MifosBaseFragment
               Hence, create a Map instead of hardcoding the number of
               query parameters in the Retrofit Service.*/
 
-            for (int i = 0; i < binding.tableDetails.getChildCount(); i++) {
-                TableRow tableRow = (TableRow) binding.tableDetails.getChildAt(i);
+            for (int i = 0; i < tableDetails.getChildCount(); i++) {
+                TableRow tableRow = (TableRow) tableDetails.getChildAt(i);
                 if (tableRow.getChildAt(1) instanceof Spinner) {
                     Spinner sp = (Spinner) tableRow.getChildAt(1);
                     switch (sp.getTag().toString()) {
@@ -338,8 +339,8 @@ public class ReportDetailFragment extends MifosBaseFragment
 
     @Override
     public void showOffices(FullParameterListResponse response, String identifier) {
-        for (int i = 0; i < binding.tableDetails.getChildCount(); i++) {
-            TableRow tableRow = (TableRow) binding.tableDetails.getChildAt(i);
+        for (int i = 0; i < tableDetails.getChildCount(); i++) {
+            TableRow tableRow = (TableRow) tableDetails.getChildAt(i);
             if (tableRow.getChildAt(1) instanceof EditText) {
                 continue;
             }
@@ -361,8 +362,8 @@ public class ReportDetailFragment extends MifosBaseFragment
 
     @Override
     public void showProduct(FullParameterListResponse response, String identifier) {
-        for (int i = 0; i < binding.tableDetails.getChildCount(); i++) {
-            TableRow tableRow = (TableRow) binding.tableDetails.getChildAt(i);
+        for (int i = 0; i < tableDetails.getChildCount(); i++) {
+            TableRow tableRow = (TableRow) tableDetails.getChildAt(i);
             if (tableRow.getChildAt(1) instanceof EditText) {
                 continue;
             }
@@ -399,7 +400,7 @@ public class ReportDetailFragment extends MifosBaseFragment
 
     @Override
     public void showError(String error) {
-        Toaster.show(binding.getRoot(), error);
+        Toaster.show(rootView, error);
     }
 
     @Override
@@ -491,7 +492,7 @@ public class ReportDetailFragment extends MifosBaseFragment
                 }
             }
         });
-        binding.tableDetails.addView(row);
+        tableDetails.addView(row);
     }
 
     @Override
@@ -510,8 +511,8 @@ public class ReportDetailFragment extends MifosBaseFragment
 
     @Override
     public void onDatePicked(String date) {
-        for (int i = 0; i < binding.tableDetails.getChildCount(); i++) {
-            TableRow tableRow = (TableRow) binding.tableDetails.getChildAt(i);
+        for (int i = 0; i < tableDetails.getChildCount(); i++) {
+            TableRow tableRow = (TableRow) tableDetails.getChildAt(i);
             if (tableRow.getChildAt(1) instanceof Spinner) {
                 continue;
             }

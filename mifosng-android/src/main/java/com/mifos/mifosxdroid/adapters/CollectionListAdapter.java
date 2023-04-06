@@ -13,8 +13,7 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.mifos.mifosxdroid.databinding.RowCollectionListGroupBinding;
-import com.mifos.mifosxdroid.databinding.RowCollectionListGroupClientBinding;
+import com.mifos.mifosxdroid.R;
 import com.mifos.objects.db.Client;
 import com.mifos.objects.db.Loan;
 import com.mifos.objects.db.MifosGroup;
@@ -23,6 +22,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by ishankhanna on 17/07/14.
@@ -94,16 +96,13 @@ public class CollectionListAdapter extends BaseExpandableListAdapter {
             parent) {
 
         MifosGroupReusableViewHolder mifosGroupReusableViewHolder;
-        RowCollectionListGroupBinding binding;
 
         if (convertView == null) {
-            binding = RowCollectionListGroupBinding.inflate(layoutInflater, parent, false);
-            mifosGroupReusableViewHolder = new MifosGroupReusableViewHolder(binding);
-            mifosGroupReusableViewHolder.view = binding.getRoot();
-            mifosGroupReusableViewHolder.view.setTag(mifosGroupReusableViewHolder);
+            convertView = layoutInflater.inflate(R.layout.row_collection_list_group, null);
+            mifosGroupReusableViewHolder = new MifosGroupReusableViewHolder(convertView);
+            convertView.setTag(mifosGroupReusableViewHolder);
         } else {
             mifosGroupReusableViewHolder = (MifosGroupReusableViewHolder) convertView.getTag();
-            mifosGroupReusableViewHolder.view = convertView;
         }
 
         double groupTotalDue = 0;
@@ -119,7 +118,7 @@ public class CollectionListAdapter extends BaseExpandableListAdapter {
                 .getGroupName());
         mifosGroupReusableViewHolder.tv_groupTotal.setText(String.valueOf(groupTotalDue));
 
-        return mifosGroupReusableViewHolder.view;
+        return convertView;
     }
 
     @Override
@@ -127,17 +126,13 @@ public class CollectionListAdapter extends BaseExpandableListAdapter {
             convertView, ViewGroup parent) {
 
         ClientReusableViewHolder clientReusableViewHolder;
-        RowCollectionListGroupClientBinding binding;
 
         if (convertView == null) {
-            binding = RowCollectionListGroupClientBinding
-                    .inflate(layoutInflater, parent, false);
-            clientReusableViewHolder = new ClientReusableViewHolder(binding);
-            clientReusableViewHolder.view = binding.getRoot();
-            clientReusableViewHolder.view.setTag(clientReusableViewHolder);
+            convertView = layoutInflater.inflate(R.layout.row_collection_list_group_client, null);
+            clientReusableViewHolder = new ClientReusableViewHolder(convertView);
+            convertView.setTag(clientReusableViewHolder);
         } else {
             clientReusableViewHolder = (ClientReusableViewHolder) convertView.getTag();
-            clientReusableViewHolder.view = convertView;
         }
 
         Client client = sMifosGroups.get(groupPosition).getClients().get(childPosition);
@@ -157,7 +152,7 @@ public class CollectionListAdapter extends BaseExpandableListAdapter {
                 childPosition);
         clientReusableViewHolder.lv_loans.setAdapter(collectionSheetLoanAccountListAdapter);
 
-        return clientReusableViewHolder.view;
+        return convertView;
     }
 
     @Override
@@ -167,31 +162,29 @@ public class CollectionListAdapter extends BaseExpandableListAdapter {
 
     public static class MifosGroupReusableViewHolder {
 
-        private View view;
+        @BindView(R.id.tv_groupName)
         TextView tv_groupName;
+        @BindView(R.id.tv_groupTotal)
         TextView tv_groupTotal;
 
-        public MifosGroupReusableViewHolder(RowCollectionListGroupBinding binding) {
-
-            tv_groupName = binding.tvGroupName;
-            tv_groupTotal = binding.tvGroupTotal;
+        public MifosGroupReusableViewHolder(View view) {
+            ButterKnife.bind(this, view);
         }
     }
 
     public static class ClientReusableViewHolder {
 
-        private View view;
+        @BindView(R.id.tv_clientId)
         TextView tv_clientId;
+        @BindView(R.id.tv_clientName)
         TextView tv_clientName;
+        @BindView(R.id.tv_clientTotal)
         TextView tv_clientTotal;
+        @BindView(R.id.lv_loans)
         ListView lv_loans;
 
-        public ClientReusableViewHolder(RowCollectionListGroupClientBinding binding) {
-
-            tv_clientId = binding.tvClientId;
-            tv_clientName = binding.tvClientName;
-            tv_clientTotal = binding.tvClientTotal;
-            lv_loans = binding.lvLoans;
+        public ClientReusableViewHolder(View view) {
+            ButterKnife.bind(this, view);
         }
 
     }

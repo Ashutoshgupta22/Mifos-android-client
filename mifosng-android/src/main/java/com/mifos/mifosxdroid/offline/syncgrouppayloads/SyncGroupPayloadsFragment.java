@@ -2,6 +2,9 @@ package com.mifos.mifosxdroid.offline.syncgrouppayloads;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -9,11 +12,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.mifos.mifosxdroid.R;
 import com.mifos.mifosxdroid.adapters.SyncGroupPayloadAdapter;
@@ -21,7 +22,6 @@ import com.mifos.mifosxdroid.core.MaterialDialog;
 import com.mifos.mifosxdroid.core.MifosBaseActivity;
 import com.mifos.mifosxdroid.core.MifosBaseFragment;
 import com.mifos.mifosxdroid.core.util.Toaster;
-import com.mifos.mifosxdroid.databinding.FragmentSyncpayloadBinding;
 import com.mifos.objects.group.GroupPayload;
 import com.mifos.utils.Constants;
 import com.mifos.utils.PrefManager;
@@ -31,6 +31,9 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 /**
  * Created by Rajan Maurya on 19/07/16.
@@ -39,13 +42,29 @@ public class SyncGroupPayloadsFragment extends MifosBaseFragment implements
         SyncGroupPayloadsMvpView, DialogInterface.OnClickListener {
 
     public final String LOG_TAG = getClass().getSimpleName();
-    private FragmentSyncpayloadBinding binding;
+
+    @BindView(R.id.rv_sync_payload)
+    RecyclerView rv_payload_group;
+
+    @BindView(R.id.swipe_container)
+    SwipeRefreshLayout swipeRefreshLayout;
+
+    @BindView(R.id.noPayloadText)
+    TextView mNoPayloadText;
+
+    @BindView(R.id.noPayloadIcon)
+    ImageView mNoPayloadIcon;
+
+    @BindView(R.id.ll_error)
+    LinearLayout ll_error;
 
     @Inject
     SyncGroupPayloadsPresenter mSyncGroupPayloadsPresenter;
 
     @Inject
     SyncGroupPayloadAdapter mSyncGroupPayloadAdapter;
+
+    View rootView;
 
     List<GroupPayload> groupPayloads;
 
@@ -71,51 +90,46 @@ public class SyncGroupPayloadsFragment extends MifosBaseFragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        rootView = inflater.inflate(R.layout.fragment_syncpayload, container, false);
 
-        binding = FragmentSyncpayloadBinding.inflate(inflater, container, false);
+        ButterKnife.bind(this, rootView);
         mSyncGroupPayloadsPresenter.attachView(this);
 
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
         mLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        binding.rvSyncPayload.setLayoutManager(mLayoutManager);
-        binding.rvSyncPayload.setHasFixedSize(true);
-        binding.rvSyncPayload.setAdapter(mSyncGroupPayloadAdapter);
+        rv_payload_group.setLayoutManager(mLayoutManager);
+        rv_payload_group.setHasFixedSize(true);
+        rv_payload_group.setAdapter(mSyncGroupPayloadAdapter);
 
 
         /**
          * Loading All Client Payloads from Database
          */
-        binding.swipeContainer.setColorSchemeColors(getActivity()
+        swipeRefreshLayout.setColorSchemeColors(getActivity()
                         .getResources().getIntArray(R.array.swipeRefreshColors));
-        binding.swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
 
                 mSyncGroupPayloadsPresenter.loanDatabaseGroupPayload();
 
-                if (binding.swipeContainer.isRefreshing())
-                    binding.swipeContainer.setRefreshing(false);
+                if (swipeRefreshLayout.isRefreshing())
+                    swipeRefreshLayout.setRefreshing(false);
             }
         });
 
         mSyncGroupPayloadsPresenter.loanDatabaseGroupPayload();
 
-        return binding.getRoot();
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        binding.noPayloadIcon.setOnClickListener(view1 -> reloadOnError());
+        return rootView;
     }
 
     /**
      * Show when Database response is null or failed to fetch the client payload
      * Onclick Send Fresh Request for Client Payload.
      */
+    @OnClick(R.id.noPayloadIcon)
     public void reloadOnError() {
-        binding.llError.setVisibility(View.GONE);
+        ll_error.setVisibility(View.GONE);
         mSyncGroupPayloadsPresenter.loanDatabaseGroupPayload();
     }
 
@@ -149,7 +163,7 @@ public class SyncGroupPayloadsFragment extends MifosBaseFragment implements
                     mClientSyncIndex = 0;
                     syncGroupPayload();
                 } else {
-                    Toaster.show(binding.getRoot(),
+                    Toaster.show(rootView,
                             getActivity().getResources().getString(R.string.nothing_to_sync));
                 }
                 break;
@@ -160,10 +174,10 @@ public class SyncGroupPayloadsFragment extends MifosBaseFragment implements
 
     @Override
     public void showError(int stringId) {
-        binding.llError.setVisibility(View.VISIBLE);
+        ll_error.setVisibility(View.VISIBLE);
         String message = stringId + getResources().getString(R.string.click_to_refresh);
-        binding.noPayloadText.setText(message);
-        Toaster.show(binding.getRoot(), stringId);
+        mNoPayloadText.setText(message);
+        Toaster.show(rootView, stringId);
     }
 
     /**
@@ -178,10 +192,10 @@ public class SyncGroupPayloadsFragment extends MifosBaseFragment implements
     public void showGroups(List<GroupPayload> groupPayload) {
         groupPayloads = groupPayload;
         if (groupPayload.size() == 0) {
-            binding.llError.setVisibility(View.VISIBLE);
-            binding.noPayloadText.setText(getActivity()
+            ll_error.setVisibility(View.VISIBLE);
+            mNoPayloadText.setText(getActivity()
                     .getResources().getString(R.string.no_group_payload_to_sync));
-            binding.noPayloadIcon.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp);
+            mNoPayloadIcon.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp);
         } else {
             mSyncGroupPayloadAdapter.setGroupPayload(groupPayloads);
         }
@@ -204,10 +218,10 @@ public class SyncGroupPayloadsFragment extends MifosBaseFragment implements
         if (groupPayloads.size() != 0) {
             syncGroupPayload();
         } else {
-            binding.llError.setVisibility(View.VISIBLE);
-            binding.noPayloadText.setText(getActivity()
+            ll_error.setVisibility(View.VISIBLE);
+            mNoPayloadText.setText(getActivity()
                     .getResources().getString(R.string.all_groups_synced));
-            binding.noPayloadIcon.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp);
+            mNoPayloadIcon.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp);
         }
     }
 
@@ -224,10 +238,10 @@ public class SyncGroupPayloadsFragment extends MifosBaseFragment implements
 
     @Override
     public void showProgressbar(boolean show) {
-        binding.swipeContainer.setRefreshing(show);
+        swipeRefreshLayout.setRefreshing(show);
         if (show && mSyncGroupPayloadAdapter.getItemCount() == 0) {
             showMifosProgressBar();
-            binding.swipeContainer.setRefreshing(false);
+            swipeRefreshLayout.setRefreshing(false);
         } else {
             hideMifosProgressBar();
         }
@@ -248,7 +262,7 @@ public class SyncGroupPayloadsFragment extends MifosBaseFragment implements
                         mClientSyncIndex = 0;
                         syncGroupPayload();
                     } else {
-                        Toaster.show(binding.getRoot(),
+                        Toaster.show(rootView,
                                 getActivity().getResources().getString(R.string.nothing_to_sync));
                     }
                     break;

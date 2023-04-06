@@ -2,6 +2,9 @@ package com.mifos.mifosxdroid.offline.syncloanrepaymenttransacition;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -9,11 +12,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.mifos.mifosxdroid.R;
 import com.mifos.mifosxdroid.adapters.SyncLoanRepaymentAdapter;
@@ -21,7 +22,6 @@ import com.mifos.mifosxdroid.core.MaterialDialog;
 import com.mifos.mifosxdroid.core.MifosBaseActivity;
 import com.mifos.mifosxdroid.core.MifosBaseFragment;
 import com.mifos.mifosxdroid.core.util.Toaster;
-import com.mifos.mifosxdroid.databinding.FragmentSyncpayloadBinding;
 import com.mifos.objects.PaymentTypeOption;
 import com.mifos.objects.accounts.loan.LoanRepaymentRequest;
 import com.mifos.utils.Constants;
@@ -32,6 +32,9 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 /**
  * Created by Rajan Maurya on 28/07/16.
@@ -40,13 +43,29 @@ public class SyncLoanRepaymentTransactionFragment extends MifosBaseFragment impl
         SyncLoanRepaymentTransactionMvpView, DialogInterface.OnClickListener {
 
     public final String LOG_TAG = getClass().getSimpleName();
-    private FragmentSyncpayloadBinding binding;
+
+    @BindView(R.id.rv_sync_payload)
+    RecyclerView rv_loan_repayment;
+
+    @BindView(R.id.swipe_container)
+    SwipeRefreshLayout swipeRefreshLayout;
+
+    @BindView(R.id.noPayloadText)
+    TextView mNoPayloadText;
+
+    @BindView(R.id.noPayloadIcon)
+    ImageView mNoPayloadIcon;
+
+    @BindView(R.id.ll_error)
+    LinearLayout ll_error;
+
     @Inject
     SyncLoanRepaymentTransactionPresenter mSyncLoanRepaymentTransactionPresenter;
 
     @Inject
     SyncLoanRepaymentAdapter mSyncLoanRepaymentAdapter;
 
+    private View rootView;
 
     private List<LoanRepaymentRequest> mLoanRepaymentRequests;
 
@@ -62,8 +81,7 @@ public class SyncLoanRepaymentTransactionFragment extends MifosBaseFragment impl
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ((MifosBaseActivity) getActivity()).getActivityComponent()
-                .inject(this);
+        ((MifosBaseActivity) getActivity()).getActivityComponent().inject(this);
         mLoanRepaymentRequests = new ArrayList<>();
         setHasOptionsMenu(true);
     }
@@ -72,23 +90,24 @@ public class SyncLoanRepaymentTransactionFragment extends MifosBaseFragment impl
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        rootView = inflater.inflate(R.layout.fragment_syncpayload, container, false);
 
-        binding = FragmentSyncpayloadBinding.inflate(inflater, container, false);
+        ButterKnife.bind(this, rootView);
         mSyncLoanRepaymentTransactionPresenter.attachView(this);
 
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
         mLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        binding.rvSyncPayload.setLayoutManager(mLayoutManager);
-        binding.rvSyncPayload.setHasFixedSize(true);
-        binding.rvSyncPayload.setAdapter(mSyncLoanRepaymentAdapter);
+        rv_loan_repayment.setLayoutManager(mLayoutManager);
+        rv_loan_repayment.setHasFixedSize(true);
+        rv_loan_repayment.setAdapter(mSyncLoanRepaymentAdapter);
 
 
         /**
          * Loading All Loan Repayment Offline Transaction from Database
          */
-        binding.swipeContainer.setColorSchemeColors(getActivity()
+        swipeRefreshLayout.setColorSchemeColors(getActivity()
                 .getResources().getIntArray(R.array.swipeRefreshColors));
-        binding.swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
 
@@ -96,8 +115,8 @@ public class SyncLoanRepaymentTransactionFragment extends MifosBaseFragment impl
                 mSyncLoanRepaymentTransactionPresenter.loadDatabaseLoanRepaymentTransactions();
                 mSyncLoanRepaymentTransactionPresenter.loanPaymentTypeOption();
 
-                if (binding.swipeContainer.isRefreshing())
-                    binding.swipeContainer.setRefreshing(false);
+                if (swipeRefreshLayout.isRefreshing())
+                    swipeRefreshLayout.setRefreshing(false);
             }
         });
 
@@ -105,22 +124,16 @@ public class SyncLoanRepaymentTransactionFragment extends MifosBaseFragment impl
         mSyncLoanRepaymentTransactionPresenter.loadDatabaseLoanRepaymentTransactions();
         mSyncLoanRepaymentTransactionPresenter.loanPaymentTypeOption();
 
-        return binding.getRoot();
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        binding.noPayloadIcon.setOnClickListener(view1 -> reloadOnError());
+        return rootView;
     }
 
     /**
      * Show when Database response is null or failed to fetch the List<LoanRepayment>
      * Onclick Send Fresh Request for List<LoanRepayment>.
      */
+    @OnClick(R.id.noPayloadIcon)
     public void reloadOnError() {
-        binding.llError.setVisibility(View.GONE);
+        ll_error.setVisibility(View.GONE);
         mSyncLoanRepaymentTransactionPresenter.loadDatabaseLoanRepaymentTransactions();
     }
 
@@ -147,7 +160,7 @@ public class SyncLoanRepaymentTransactionFragment extends MifosBaseFragment impl
                     mClientSyncIndex = 0;
                     syncGroupPayload();
                 } else {
-                    Toaster.show(binding.getRoot(),
+                    Toaster.show(rootView,
                             getActivity().getResources().getString(R.string.nothing_to_sync));
                 }
                 break;
@@ -160,10 +173,10 @@ public class SyncLoanRepaymentTransactionFragment extends MifosBaseFragment impl
     public void showLoanRepaymentTransactions(List<LoanRepaymentRequest> loanRepaymentRequests) {
         mLoanRepaymentRequests = loanRepaymentRequests;
         if (loanRepaymentRequests.size() == 0) {
-            binding.llError.setVisibility(View.VISIBLE);
-            binding.noPayloadText.setText(getActivity()
+            ll_error.setVisibility(View.VISIBLE);
+            mNoPayloadText.setText(getActivity()
                     .getResources().getString(R.string.no_repayment_to_sync));
-            binding.noPayloadIcon.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp);
+            mNoPayloadIcon.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp);
         } else {
             mSyncLoanRepaymentAdapter.setLoanRepaymentRequests(loanRepaymentRequests);
         }
@@ -208,29 +221,29 @@ public class SyncLoanRepaymentTransactionFragment extends MifosBaseFragment impl
         if (mLoanRepaymentRequests.size() != 0) {
             syncGroupPayload();
         } else {
-            binding.llError.setVisibility(View.VISIBLE);
-            binding.noPayloadText.setText(getActivity()
+            ll_error.setVisibility(View.VISIBLE);
+            mNoPayloadText.setText(getActivity()
                     .getResources().getString(R.string.all_repayment_synced));
-            binding.noPayloadIcon.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp);
+            mNoPayloadIcon.setImageResource(R.drawable.ic_assignment_turned_in_black_24dp);
         }
     }
 
 
     @Override
     public void showError(int stringId) {
-        binding.llError.setVisibility(View.VISIBLE);
+        ll_error.setVisibility(View.VISIBLE);
         String message =
                 stringId + getActivity().getResources().getString(R.string.click_to_refresh);
-        binding.noPayloadText.setText(message);
-        Toaster.show(binding.getRoot(), stringId);
+        mNoPayloadText.setText(message);
+        Toaster.show(rootView, stringId);
     }
 
     @Override
     public void showProgressbar(boolean show) {
-        binding.swipeContainer.setRefreshing(show);
+        swipeRefreshLayout.setRefreshing(show);
         if (show && mSyncLoanRepaymentAdapter.getItemCount() == 0) {
             showMifosProgressBar();
-            binding.swipeContainer.setRefreshing(false);
+            swipeRefreshLayout.setRefreshing(false);
         } else {
             hideMifosProgressBar();
         }
@@ -252,7 +265,7 @@ public class SyncLoanRepaymentTransactionFragment extends MifosBaseFragment impl
                         mClientSyncIndex = 0;
                         syncGroupPayload();
                     } else {
-                        Toaster.show(binding.getRoot(),
+                        Toaster.show(rootView,
                                 getActivity().getResources().getString(R.string.nothing_to_sync));
                     }
                     break;

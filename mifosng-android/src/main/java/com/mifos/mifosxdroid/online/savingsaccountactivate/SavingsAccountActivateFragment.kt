@@ -8,14 +8,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
+import butterknife.BindView
+import butterknife.ButterKnife
+import butterknife.OnClick
 import com.mifos.api.GenericResponse
 import com.mifos.mifosxdroid.R
 import com.mifos.mifosxdroid.core.MifosBaseActivity
 import com.mifos.mifosxdroid.core.MifosBaseFragment
 import com.mifos.mifosxdroid.core.util.Toaster
-import com.mifos.mifosxdroid.databinding.DialogFragmentApproveSavingsBinding
 import com.mifos.mifosxdroid.uihelpers.MFDatePicker
 import com.mifos.mifosxdroid.uihelpers.MFDatePicker.OnDatePickListener
 import com.mifos.objects.accounts.savings.DepositType
@@ -23,6 +28,7 @@ import com.mifos.utils.Constants
 import com.mifos.utils.DateHelper
 import com.mifos.utils.FragmentConstants
 import com.mifos.utils.SafeUIBlockingUtility
+import java.util.*
 import javax.inject.Inject
 
 /**
@@ -33,11 +39,26 @@ import javax.inject.Inject
 class SavingsAccountActivateFragment : MifosBaseFragment(), OnDatePickListener, SavingsAccountActivateMvpView {
     val LOG_TAG = javaClass.simpleName
 
-    private lateinit var binding:DialogFragmentApproveSavingsBinding
+    @JvmField
+    @BindView(R.id.tv_approval_date_on)
+    var tvActivateDateHeading: TextView? = null
+
+    @JvmField
+    @BindView(R.id.tv_approval_date)
+    var tvActivationDate: TextView? = null
+
+    @JvmField
+    @BindView(R.id.btn_approve_savings)
+    var btnActivateSavings: Button? = null
+
+    @JvmField
+    @BindView(R.id.et_savings_approval_reason)
+    var etSavingsActivateReason: EditText? = null
 
     @JvmField
     @Inject
     var mSavingsAccountActivatePresenter: SavingsAccountActivatePresenter? = null
+    lateinit var rootView: View
     var activationDate: String? = null
     var savingsAccountNumber = 0
     var savingsAccountType: DepositType? = null
@@ -56,31 +77,25 @@ class SavingsAccountActivateFragment : MifosBaseFragment(), OnDatePickListener, 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         activity?.actionBar?.setDisplayHomeAsUpEnabled(true)
-        binding = DialogFragmentApproveSavingsBinding.inflate(layoutInflater,container,false)
-
+        rootView = inflater.inflate(R.layout.dialog_fragment_approve_savings, null)
+        ButterKnife.bind(this, rootView)
         mSavingsAccountActivatePresenter!!.attachView(this)
         safeUIBlockingUtility = SafeUIBlockingUtility(activity,
                 getString(R.string.savings_account_loading_message))
         showUserInterface()
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        binding.btnApproveSavings.setOnClickListener { onClickActivateSavings() }
-        binding.tvApprovalDate.setOnClickListener { onClickApprovalDate() }
+        return rootView
     }
 
     override fun showUserInterface() {
-        binding.etSavingsApprovalReason.visibility = View.GONE
-        binding.tvApprovalDateOn.text = resources.getString(R.string.activated_on)
+        etSavingsActivateReason!!.visibility = View.GONE
+        tvActivateDateHeading!!.text = resources.getString(R.string.activated_on)
         mfDatePicker = MFDatePicker.newInsance(this)
-        binding.tvApprovalDate.text = MFDatePicker.getDatePickedAsString()
-        activationDate = binding.tvApprovalDate.text.toString()
+        tvActivationDate!!.text = MFDatePicker.getDatePickedAsString()
+        activationDate = tvActivationDate!!.text.toString()
         showActivationDate()
     }
 
+    @OnClick(R.id.btn_approve_savings)
     fun onClickActivateSavings() {
         val hashMap = HashMap<String, Any?>()
         hashMap["dateFormat"] = "dd MMMM yyyy"
@@ -89,12 +104,13 @@ class SavingsAccountActivateFragment : MifosBaseFragment(), OnDatePickListener, 
         mSavingsAccountActivatePresenter!!.activateSavings(savingsAccountNumber, hashMap)
     }
 
+    @OnClick(R.id.tv_approval_date)
     fun onClickApprovalDate() {
         mfDatePicker!!.show(requireActivity().supportFragmentManager, FragmentConstants.DFRAG_DATE_PICKER)
     }
 
     override fun onDatePicked(date: String) {
-        binding.tvApprovalDate.text = date
+        tvActivationDate!!.text = date
         activationDate = date
         showActivationDate()
     }
@@ -105,7 +121,7 @@ class SavingsAccountActivateFragment : MifosBaseFragment(), OnDatePickListener, 
     }
 
     override fun showSavingAccountActivatedSuccessfully(genericResponse: GenericResponse?) {
-        Toaster.show(binding.tvApprovalDateOn,
+        Toaster.show(tvActivateDateHeading,
                 resources.getString(R.string.savings_account_activated))
         Toast.makeText(activity, "Savings Activated", Toast.LENGTH_LONG).show()
         requireActivity().supportFragmentManager.popBackStack()

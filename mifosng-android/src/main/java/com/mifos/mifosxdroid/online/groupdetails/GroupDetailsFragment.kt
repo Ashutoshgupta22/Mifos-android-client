@@ -5,6 +5,9 @@ import android.os.Bundle
 import android.text.TextUtils
 import android.view.*
 import android.widget.*
+import butterknife.BindView
+import butterknife.ButterKnife
+import butterknife.OnClick
 import com.joanzapata.iconify.fonts.MaterialIcons
 import com.joanzapata.iconify.widget.IconTextView
 import com.mifos.mifosxdroid.R
@@ -12,7 +15,6 @@ import com.mifos.mifosxdroid.adapters.LoanAccountsListAdapter
 import com.mifos.mifosxdroid.adapters.SavingsAccountsListAdapter
 import com.mifos.mifosxdroid.core.MifosBaseActivity
 import com.mifos.mifosxdroid.core.MifosBaseFragment
-import com.mifos.mifosxdroid.databinding.FragmentGroupDetailsBinding
 import com.mifos.mifosxdroid.online.activate.ActivateFragment
 import com.mifos.mifosxdroid.online.datatable.DataTableFragment
 import com.mifos.mifosxdroid.online.documentlist.DocumentListFragment
@@ -31,16 +33,65 @@ import javax.inject.Inject
  * Created by nellyk on 2/27/2016.
  */
 class GroupDetailsFragment : MifosBaseFragment(), GroupDetailsMvpView {
+    @JvmField
+    @BindView(R.id.tv_groupsName)
+    var tv_fullName: TextView? = null
 
-    private lateinit var binding: FragmentGroupDetailsBinding
+    @JvmField
+    @BindView(R.id.tv_groupexternalId)
+    var tv_externalId: TextView? = null
+
+    @JvmField
+    @BindView(R.id.tv_groupactivationDate)
+    var tv_activationDate: TextView? = null
+
+    @JvmField
+    @BindView(R.id.tv_groupoffice)
+    var tv_office: TextView? = null
+
+    @JvmField
+    @BindView(R.id.row_account)
+    var rowAccount: TableRow? = null
+
+    @JvmField
+    @BindView(R.id.row_external)
+    var rowExternal: TableRow? = null
+
+    @JvmField
+    @BindView(R.id.row_activation)
+    var rowActivation: TableRow? = null
+
+    @JvmField
+    @BindView(R.id.row_office)
+    var rowOffice: TableRow? = null
+
+    @JvmField
+    @BindView(R.id.row_group)
+    var rowGroup: TableRow? = null
+
+    @JvmField
+    @BindView(R.id.row_staff)
+    var rowStaff: TableRow? = null
+
+    @JvmField
+    @BindView(R.id.row_loan)
+    var rowLoan: TableRow? = null
+
+    @JvmField
+    @BindView(R.id.rl_group)
+    var rlGroup: RelativeLayout? = null
+
+    @JvmField
+    @BindView(R.id.ll_bottom_panel)
+    var llBottomPanel: LinearLayout? = null
 
     @JvmField
     @Inject
     var mGroupDetailsPresenter: GroupDetailsPresenter? = null
+    private lateinit var rootView: View
     private var groupId = 0
     private var accountAccordion: AccountAccordion? = null
     private var mListener: OnFragmentInteractionListener? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         (activity as MifosBaseActivity?)!!.activityComponent.inject(this)
@@ -51,18 +102,14 @@ class GroupDetailsFragment : MifosBaseFragment(), GroupDetailsMvpView {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        binding = FragmentGroupDetailsBinding.inflate(inflater,container,false)
+        rootView = inflater.inflate(R.layout.fragment_group_details, container, false)
+        ButterKnife.bind(this, rootView)
         mGroupDetailsPresenter!!.attachView(this)
         mGroupDetailsPresenter!!.loadGroupDetailsAndAccounts(groupId)
-        return binding.root
+        return rootView
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        binding.btnActivateGroup.setOnClickListener { onClickActivateGroup() }
-    }
-
+    @OnClick(R.id.btn_activate_group)
     fun onClickActivateGroup() {
         val activateFragment = ActivateFragment.newInstance(groupId, Constants.ACTIVATE_GROUP)
         val fragmentTransaction = requireActivity().supportFragmentManager
@@ -119,10 +166,10 @@ class GroupDetailsFragment : MifosBaseFragment(), GroupDetailsMvpView {
 
     override fun showProgressbar(show: Boolean) {
         if (show) {
-            binding.rlGroup.visibility = View.GONE
+            rlGroup!!.visibility = View.GONE
             showMifosProgressBar()
         } else {
-            binding.rlGroup.visibility = View.VISIBLE
+            rlGroup!!.visibility = View.VISIBLE
             hideMifosProgressBar()
         }
     }
@@ -130,26 +177,26 @@ class GroupDetailsFragment : MifosBaseFragment(), GroupDetailsMvpView {
     override fun showGroup(group: Group?) {
         if (group != null) {
             if (!group.active) {
-                binding.llBottomPanel.visibility = View.VISIBLE
+                llBottomPanel!!.visibility = View.VISIBLE
             }
             setToolbarTitle(getString(R.string.group) + " - " + group.name)
-            binding.tvGroupsName.text = group.name
+            tv_fullName!!.text = group.name
             if (group.externalId != null) {
-                binding.tvGroupexternalId.text = group.externalId
+                tv_externalId!!.text = group.externalId
             } else {
-                binding.tvGroupexternalId.setText(R.string.not_available)
+                tv_externalId!!.setText(R.string.not_available)
             }
             try {
                 val dateString = Utils.getStringOfDate(group.activationDate)
-                binding.tvGroupactivationDate.text = dateString
-                if (TextUtils.isEmpty(dateString)) binding.rowActivation.visibility = View.GONE
+                tv_activationDate!!.text = dateString
+                if (TextUtils.isEmpty(dateString)) rowActivation!!.visibility = View.GONE
             } catch (e: IndexOutOfBoundsException) {
                 Toast.makeText(activity, getString(R.string.error_group_inactive),
                         Toast.LENGTH_SHORT).show()
-                binding.tvGroupactivationDate.text = ""
+                tv_activationDate!!.text = ""
             }
-            binding.tvGroupoffice.text = group.officeName
-            if (TextUtils.isEmpty(group.officeName)) binding.rowOffice.visibility = View.GONE
+            tv_office!!.text = group.officeName
+            if (TextUtils.isEmpty(group.officeName)) rowOffice!!.visibility = View.GONE
         }
     }
 
@@ -166,8 +213,7 @@ class GroupDetailsFragment : MifosBaseFragment(), GroupDetailsMvpView {
         if (groupAccounts?.loanAccounts!!.size > 0) {
             val section = AccountAccordion.Section.LOANS
             val adapter = LoanAccountsListAdapter(requireActivity().applicationContext,
-                groupAccounts.loanAccounts
-            )
+                    groupAccounts?.loanAccounts)
             section.connect(activity, adapter, AdapterView.OnItemClickListener { adapterView, view, i, l -> mListener!!.loadLoanAccountSummary(adapter.getItem(i).id) })
         }
         if (groupAccounts.nonRecurringSavingsAccounts.size > 0) {
@@ -199,7 +245,7 @@ class GroupDetailsFragment : MifosBaseFragment(), GroupDetailsMvpView {
         mListener = try {
             activity as OnFragmentInteractionListener
         } catch (e: ClassCastException) {
-            throw ClassCastException(activity.javaClass.simpleName + " must " +
+            throw ClassCastException(activity.javaClass.getSimpleName() + " must " +
                     "implement OnFragmentInteractionListener")
         }
     }

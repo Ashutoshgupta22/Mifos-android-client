@@ -10,25 +10,29 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ExpandableListView
+import butterknife.BindView
+import butterknife.ButterKnife
+import com.mifos.mifosxdroid.R
 import com.mifos.mifosxdroid.adapters.LoanTransactionAdapter
 import com.mifos.mifosxdroid.core.MifosBaseActivity
 import com.mifos.mifosxdroid.core.MifosBaseFragment
 import com.mifos.mifosxdroid.core.util.Toaster
-import com.mifos.mifosxdroid.databinding.FragmentLoanTransactionsBinding
 import com.mifos.objects.accounts.loan.LoanWithAssociations
 import com.mifos.utils.Constants
 import javax.inject.Inject
 
 class LoanTransactionsFragment : MifosBaseFragment(), LoanTransactionsMvpView {
+    @kotlin.jvm.JvmField
+    @BindView(R.id.elv_loan_transactions)
+    var elv_loanTransactions: ExpandableListView? = null
 
-    private lateinit var binding: FragmentLoanTransactionsBinding
-
-    @JvmField
+    @kotlin.jvm.JvmField
     @Inject
     var mLoanTransactionsPresenter: LoanTransactionsPresenter? = null
     private var adapter: LoanTransactionAdapter? = null
     private var loanAccountNumber = 0
-
+    private lateinit var rootView: View
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         (activity as MifosBaseActivity?)!!.activityComponent.inject(this)
@@ -37,10 +41,11 @@ class LoanTransactionsFragment : MifosBaseFragment(), LoanTransactionsMvpView {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        binding = FragmentLoanTransactionsBinding.inflate(inflater,container,false)
+        rootView = inflater.inflate(R.layout.fragment_loan_transactions, container, false)
+        ButterKnife.bind(this, rootView)
         mLoanTransactionsPresenter!!.attachView(this)
         inflateLoanTransactions()
-        return binding.root
+        return rootView
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
@@ -64,12 +69,12 @@ class LoanTransactionsFragment : MifosBaseFragment(), LoanTransactionsMvpView {
         Log.i("Transaction List Size", "" + loanWithAssociations.transactions.size)
         adapter = LoanTransactionAdapter(activity,
                 loanWithAssociations.transactions)
-        binding.elvLoanTransactions.setAdapter(adapter)
-        binding.elvLoanTransactions.setGroupIndicator(null)
+        elv_loanTransactions!!.setAdapter(adapter)
+        elv_loanTransactions!!.setGroupIndicator(null)
     }
 
     override fun showFetchingError(s: String?) {
-        Toaster.show(binding.root, s)
+        Toaster.show(rootView, s)
     }
 
     override fun onDestroyView() {
@@ -78,7 +83,7 @@ class LoanTransactionsFragment : MifosBaseFragment(), LoanTransactionsMvpView {
     }
 
     companion object {
-        @JvmStatic
+        @kotlin.jvm.JvmStatic
         fun newInstance(loanAccountNumber: Int): LoanTransactionsFragment {
             val fragment = LoanTransactionsFragment()
             val args = Bundle()

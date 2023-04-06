@@ -14,11 +14,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.mifos.mifosxdroid.R;
-import com.mifos.mifosxdroid.databinding.RowCenterItemBinding;
 import com.mifos.objects.db.MeetingCenter;
 
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 
 public class CenterAdapter extends BaseAdapter {
@@ -50,32 +51,29 @@ public class CenterAdapter extends BaseAdapter {
     public View getView(int i, View view, ViewGroup viewGroup) {
 
         ViewHolder viewHolder;
-        RowCenterItemBinding binding;
 
         if (view == null) {
-            binding = RowCenterItemBinding.inflate(layoutInflater, viewGroup, false);
-            viewHolder = new ViewHolder(binding);
-            viewHolder.view = binding.getRoot();
-            viewHolder.view.setTag(viewHolder);
+            view = layoutInflater.inflate(R.layout.row_center_item, viewGroup, false);
+            viewHolder = new ViewHolder(view);
+            view.setTag(viewHolder);
         } else {
             viewHolder = (ViewHolder) view.getTag();
-            viewHolder.view = view;
         }
         MeetingCenter center = centers.get(i);
         viewHolder.tv_center_name.setText(center.getName());
         if (center.getIsSynced() == 1)
             viewHolder.ivCenterSynced.setImageResource(R.drawable.ic_content_import_export);
-        return viewHolder.view;
+        return view;
     }
 
     public static class ViewHolder {
-        private View view;
+        @BindView(R.id.tv_center_name)
         TextView tv_center_name;
+        @BindView(R.id.iv_center_synced)
         ImageView ivCenterSynced;
 
-        public ViewHolder(RowCenterItemBinding binding) {
-            tv_center_name = binding.tvCenterName;
-            ivCenterSynced = binding.ivCenterSynced;
+        public ViewHolder(View view) {
+            ButterKnife.bind(this, view);
         }
     }
 }

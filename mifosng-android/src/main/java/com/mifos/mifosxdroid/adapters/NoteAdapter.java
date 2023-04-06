@@ -1,12 +1,12 @@
 package com.mifos.mifosxdroid.adapters;
 
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.mifos.mifosxdroid.databinding.ItemNoteBinding;
+import com.mifos.mifosxdroid.R;
 import com.mifos.objects.noncore.Note;
 
 import java.util.ArrayList;
@@ -14,6 +14,8 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by rahul on 4/3/17.
@@ -30,10 +32,9 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
 
     @Override
     public NoteAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
-        ItemNoteBinding binding = ItemNoteBinding
-                .inflate(LayoutInflater.from(parent.getContext()), parent, false);
-        return new ViewHolder(binding);
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_note, parent, false);
+        return new ViewHolder(view);
     }
 
     @Override
@@ -64,11 +65,12 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
+        @BindView(R.id.tv_note)
         TextView tvNote;
 
-        public ViewHolder(ItemNoteBinding binding) {
-            super(binding.getRoot());
-            tvNote = binding.tvNote;
+        public ViewHolder(View v) {
+            super(v);
+            ButterKnife.bind(this, v);
         }
     }
 }
