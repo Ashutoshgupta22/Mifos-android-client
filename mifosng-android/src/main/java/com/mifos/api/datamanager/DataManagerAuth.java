@@ -1,8 +1,9 @@
 package com.mifos.api.datamanager;
 
 import com.mifos.api.BaseApiManager;
-import com.mifos.objects.user.User;
 import com.mifos.api.model.LoginData;
+import com.mifos.objects.user.User;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -26,9 +27,9 @@ public class DataManagerAuth {
      * @return Basic OAuth
      */
     public Observable<User> login(String username, String password) {
-        LoginData loginData = new LoginData();
-        loginData.username = username;
-        loginData.password = password;
+
+        LoginData loginData = new LoginData(username, password);
+
         return baseApiManager.getAuthApi().authenticate(loginData);
     }
 }

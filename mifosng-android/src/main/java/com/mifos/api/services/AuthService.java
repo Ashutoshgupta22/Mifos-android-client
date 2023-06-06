@@ -7,6 +7,7 @@ package com.mifos.api.services;
 import com.mifos.api.model.APIEndPoint;
 import com.mifos.api.model.LoginData;
 import com.mifos.objects.user.User;
+
 import retrofit2.http.Body;
 import retrofit2.http.POST;
 import rx.Observable;
@@ -16,6 +17,7 @@ import rx.Observable;
  */
 public interface AuthService {
     @POST(APIEndPoint.AUTHENTICATION)
-    Observable<User> authenticate(@Body LoginData login );
+
+    Observable<User> authenticate(@Body LoginData loginData);
 
 }
