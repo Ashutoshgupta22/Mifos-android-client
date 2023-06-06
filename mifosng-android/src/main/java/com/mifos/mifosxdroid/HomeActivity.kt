@@ -181,7 +181,7 @@ open class HomeActivity : MifosBaseActivity(), NavigationView.OnNavigationItemSe
             }
         }
         mDrawerLayout!!.closeDrawer(GravityCompat.START)
-        return true
+        return false
     }
 
     /**
